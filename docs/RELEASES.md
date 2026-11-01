@@ -1,5 +1,11 @@
 # Releases
 
+## v0.1.7 - 2026-11-01
+- Ocean background: blue gradient with small bubbles of varied sizes rising, plus fish (7 colored, 5 tiny silver), 2 jellyfish, a sea turtle, a seahorse and a crab walking the bottom. All swim at random (random depth changes, occasional turn-arounds, wrap at the edges).
+- Animals are drawn on a canvas layered behind the page content, so they can never pass in front of checklist items. Section panels are 50% translucent, so animals show faintly behind panels and fully in the open water; item rows are opaque.
+- Respects reduced-motion (one still frame). Canvas is fixed to the viewport, so the sea does not scroll with the list.
+
+
 ## v0.1.6 - 2026-11-01
 - Voice: added mishearings for Buoy (boy, boi, booey...), Oar (or, ore, our), Oar Leashes (or leashes, our leashes, oar leaches...), Dry Bag (drive bag, dry back...).
 - Dry Bag exists in Other Equipment and Kayak: saying "dry bag" checks the first unchecked one, saying it again checks the next; "kayak dry bag" targets Kayak. Interim/alternate transcripts of the same phrase no longer double-check.
