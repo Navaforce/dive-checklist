@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gear Check">
+<meta name="theme-color" content="#0a1a26">
+<title>Gear Check</title>
+<style>
+:root{--bg:#0a1a26;--card:#12303f;--line:#1f4a5e;--ink:#e8f6f8;--mut:#8fb2bf;--ok:#22a85f;--acc:#ffb703;--bad:#d63b3b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 -apple-system,system-ui,sans-serif;padding:calc(14px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));max-width:520px;margin-inline:auto}
+h1{font-size:22px;margin:0 0 2px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 14px}
+#mic{width:100%;min-height:64px;border:0;border-radius:16px;background:var(--acc);color:#1b1b1b;font:800 19px/1.2 -apple-system,system-ui,sans-serif}
+#mic.on{background:var(--bad);color:#fff}
+#heard{min-height:44px;margin:10px 0 14px;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--mut);font-size:15px}
+#heard b{color:var(--ink)}
+.prog{font-weight:800;margin:0 0 8px}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+li button{width:100%;min-height:64px;display:flex;align-items:center;gap:14px;padding:0 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 20px/1.2 -apple-system,system-ui,sans-serif;text-align:left}
+li button .box{flex:none;width:30px;height:30px;border-radius:8px;border:2px solid var(--mut);display:grid;place-items:center;font-size:20px;color:transparent}
+li.done button{border-color:var(--ok);background:#12392b}
+li.done button .box{background:var(--ok);border-color:var(--ok);color:#fff}
+li.done button .nm{text-decoration:line-through;opacity:.75}
+.row{display:flex;gap:10px;margin-top:14px}
+.row button{flex:1;min-height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 16px/1.2 -apple-system,system-ui,sans-serif}
+#dbg{margin-top:18px;padding:10px 12px;border-radius:12px;background:#0d2230;border:1px solid var(--line);color:var(--mut);font:12.5px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>Gear Check</h1>
+<p class="sub">Tap Start Listening, then say each item.</p>
+<button id="mic" type="button">Start Listening</button>
+<div id="heard" aria-live="polite">Heard: <b>nothing yet</b></div>
+<div class="prog" id="prog"></div>
+<ul id="list"></ul>
+<div class="row"><button id="reset" type="button">Reset</button></div>
+<div id="dbg" aria-label="Diagnostics"></div>
+<script>
+"use strict";
+const ITEMS=[
+ {name:'Mask',alias:['mask','masks']},
+ {name:'Snorkel',alias:['snorkel','snorkle','snorkeling']},
+ {name:'Fins',alias:['fins','fin','finns','pins']},
+ {name:'Dive Belt',alias:['dive belt','diving belt','weight belt','weights','belt']},
+ {name:'Spear Gun',alias:['spear gun','speargun','spear','gun','spare gun']}
+];
+const $=id=>document.getElementById(id);
+const done=new Set();
+const norm=t=>' '+t.toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim()+' ';
+const dbg={support:'',mode:'',state:'idle',restarts:0,error:'-',lastRaw:'-',wake:'-'};
+
+function drawDbg(){
+ $('dbg').textContent=['support: '+dbg.support,'mode: '+dbg.mode,'state: '+dbg.state,'auto-restarts: '+dbg.restarts,'last error: '+dbg.error,'screen wake lock: '+dbg.wake].join('\n');
+}
+function draw(){
+ const ul=$('list');ul.textContent='';
+ ITEMS.forEach((it,i)=>{
+  const li=document.createElement('li');li.className=done.has(i)?'done':'';
+  const b=document.createElement('button');b.type='button';
+  const box=document.createElement('span');box.className='box';box.textContent='✓';
+  const nm=document.createElement('span');nm.className='nm';nm.textContent=it.name;
+  b.append(box,nm);b.onclick=()=>{done.has(i)?done.delete(i):done.add(i);draw()};
+  li.append(b);ul.append(li);
+ });
+ $('prog').textContent=done.size+' of '+ITEMS.length+' checked'+(done.size===ITEMS.length?' — all set':'');
+}
+function matchText(text){
+ const t=norm(text);const hit=[];
+ ITEMS.forEach((it,i)=>{
+  if(done.has(i))return;
+  if(it.alias.some(a=>t.includes(' '+a+' ')))hit.push(i);
+ });
+ hit.forEach(i=>done.add(i));
+ if(hit.length)draw();
+ return hit;
+}
+function setHeard(t,hit){
+ const h=$('heard');h.textContent='Heard: ';
+ const b=document.createElement('b');b.textContent=t||'nothing yet';h.append(b);
+ if(hit&&hit.length)h.append(' → checked '+hit.map(i=>ITEMS[i].name).join(', '));
+}
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+dbg.support=SR?'speech recognition available':'NOT available in this browser';
+dbg.mode=(navigator.standalone||matchMedia('(display-mode: standalone)').matches)?'home-screen app':'browser tab';
+let rec=null,want=false,wakeLock=null;
+
+async function keepAwake(){
+ try{if(navigator.wakeLock){wakeLock=await navigator.wakeLock.request('screen');dbg.wake='on';wakeLock.addEventListener('release',()=>{dbg.wake='released';drawDbg()})}else dbg.wake='not supported'}catch(e){dbg.wake='failed: '+e.name}
+ drawDbg();
+}
+function start(){
+ if(!SR){dbg.state='cannot start: no speech recognition';drawDbg();return}
+ rec=new SR();rec.lang='en-US';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=3;
+ rec.onstart=()=>{dbg.state='listening';drawDbg()};
+ rec.onresult=ev=>{
+  let heard='',hit=[];
+  for(let i=ev.resultIndex;i<ev.results.length;i++){
+   for(let a=0;a<ev.results[i].length;a++){
+    const tx=ev.results[i][a].transcript;
+    if(a===0)heard+=tx+' ';
+    hit=hit.concat(matchText(tx));
+   }
+  }
+  setHeard(heard.trim(),hit);
+ };
+ rec.onerror=ev=>{dbg.error=ev.error+(ev.message?' ('+ev.message+')':'');if(ev.error==='not-allowed'||ev.error==='service-not-allowed')want=false;drawDbg()};
+ rec.onend=()=>{
+  if(want){dbg.restarts++;dbg.state='restarting';drawDbg();setTimeout(()=>{try{start()}catch(e){dbg.error=String(e)}},250)}
+  else{dbg.state='stopped';$('mic').classList.remove('on');$('mic').textContent='Start Listening';drawDbg()}
+ };
+ try{rec.start()}catch(e){dbg.error=String(e);drawDbg()}
+}
+$('mic').onclick=()=>{
+ if(want){want=false;try{rec.stop()}catch(e){}return}
+ want=true;$('mic').classList.add('on');$('mic').textContent='Listening — tap to stop';
+ keepAwake();start();
+};
+$('reset').onclick=()=>{done.clear();setHeard('',null);draw()};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!wakeLock)keepAwake()});
+draw();drawDbg();
+</script>
+</body>
+</html>
