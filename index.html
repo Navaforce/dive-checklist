@@ -184,6 +184,9 @@ function rebuild(){
  const native=[],movedL=[];
  BASE.forEach(it=>{
   if(rm.has(it.id))return;
+  const rn=edits.renamed[it.id];
+  if(rn){const p=parseLabel(rn);it.n=p.n;it.note=p.note;it.aliases=aliasesFor(p.n)}
+  else{it.n=it.orig.n;it.note=it.orig.note;it.aliases=it.orig.aliases}
   const m=edits.moved[it.id];
   it.sec=m&&sid.has(m)?m:it.home;
   (it.sec!==it.home?movedL:native).push(it);
