@@ -391,6 +391,10 @@ function draw(){
   hd.append(l,ct);
   hd.onclick=()=>{closed.has(sid)?closed.delete(sid):closed.add(sid);draw()};
   hw.append(hd);
+  const sg=document.createElement('button');sg.type='button';sg.className='sdg';sg.textContent='⠿';
+  sg.setAttribute('aria-label','Drag section '+sec.name+' to reorder');
+  sg.onpointerdown=e=>startSecDrag(e,sec,box);
+  hw.append(sg);
   if(sec.custom){
    const dl=document.createElement('button');dl.type='button';dl.className='secdel';dl.textContent='✕';
    dl.setAttribute('aria-label','Delete section '+sec.name);
