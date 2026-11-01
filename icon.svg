@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12a3b8"/><stop offset=".55" stop-color="#0a5f80"/><stop offset="1" stop-color="#04233a"/></linearGradient>
+<radialGradient id="glow" cx=".5" cy=".3" r=".7"><stop offset="0" stop-color="#7fe3ee" stop-opacity=".55"/><stop offset="1" stop-color="#7fe3ee" stop-opacity="0"/></radialGradient>
+<linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bff4f7" stop-opacity=".95"/><stop offset="1" stop-color="#4fc3d6" stop-opacity=".85"/></linearGradient>
+<linearGradient id="amb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#f08c00"/></linearGradient>
+</defs>
+<rect width="512" height="512" fill="url(#bg)"/>
+<rect width="512" height="512" fill="url(#glow)"/>
+<path d="M0 420 C90 390 170 450 256 420 S430 390 512 425 V512 H0Z" fill="#031a2b" opacity=".55"/>
+<g fill="none" stroke="#bff4f7" stroke-opacity=".8" stroke-width="7"><circle cx="400" cy="112" r="16"/><circle cx="440" cy="64" r="9"/><circle cx="360" cy="58" r="6"/></g>
+<path d="M84 262 C60 262 44 276 44 296 C44 316 60 330 84 330" fill="none" stroke="#031a2b" stroke-width="26" stroke-linecap="round" opacity=".85"/>
+<path d="M428 262 C452 262 468 276 468 296 C468 316 452 330 428 330" fill="none" stroke="#031a2b" stroke-width="26" stroke-linecap="round" opacity=".85"/>
+<path d="M104 190 H408 C438 190 456 210 456 240 V300 C456 342 432 366 392 366 H330 C306 366 296 344 256 344 C216 344 206 366 182 366 H120 C80 366 56 342 56 300 V240 C56 210 74 190 104 190Z" fill="url(#amb)"/>
+<path d="M118 214 H394 C414 214 430 226 430 246 V298 C430 322 416 340 390 340 H336 C314 340 298 318 256 318 C214 318 198 340 176 340 H122 C96 340 82 322 82 298 V246 C82 226 98 214 118 214Z" fill="url(#glass)"/>
+<path d="M120 238 C150 226 200 224 240 228" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="10" stroke-linecap="round"/>
+<path d="M176 280 L232 334 L342 214" fill="none" stroke="#05273a" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" opacity=".28" transform="translate(0 6)"/>
+<path d="M176 280 L232 334 L342 214" fill="none" stroke="#1fb866" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M176 280 L232 334 L342 214" fill="none" stroke="#6af0a6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity=".55" transform="translate(-2 -4)"/>
+</svg>
