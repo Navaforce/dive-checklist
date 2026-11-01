@@ -426,6 +426,19 @@ function draw(){
    };
    hw.append(dl);
   }
+  if(renamingSec===sid){
+   hw.textContent='';
+   const f=document.createElement('form');f.className='addf secrename';
+   const inp=document.createElement('input');inp.type='text';inp.value=renameDraft;inp.dataset.sel='1';
+   inp.autocapitalize='words';inp.autocomplete='off';inp.setAttribute('aria-label','Rename section '+sec.name);
+   inp.oninput=()=>{renameDraft=inp.value};
+   const ok=document.createElement('button');ok.type='submit';ok.className='go';ok.textContent='Save';
+   const no=document.createElement('button');no.type='button';no.className='cx';no.textContent='Cancel';
+   no.onclick=()=>{renamingSec=null;renameDraft='';draw()};
+   f.onsubmit=e=>{e.preventDefault();if(renameSection(sid,inp.value)){renamingSec=null;renameDraft='';draw()}else inp.focus()};
+   f.append(inp,ok,no);hw.append(f);
+   focusEl=inp;
+  }
   const ul=document.createElement('ul');
   ITEMS.forEach((it,i)=>{
    if(it.sec!==sid)return;
