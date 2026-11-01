@@ -1,5 +1,8 @@
 # Releases
 
+## v0.1.13 - 2026-11-01
+- The refresh icon now shows the app version next to it (top right), so you can confirm a refresh pulled the current build.
+
 ## v0.1.12 - 2026-11-01
 - Voice query: while listening, say "what am I missing" (also "what's left", "what do I still need", "what am I forgetting"). The app reads the unchecked items aloud grouped by section and shows them in the Heard box. Listening pauses during the readout so it doesn't check items from its own voice, then resumes.
 - Refresh icon (top right, white): stops listening and reloads the page with a cache-busting URL to pull the latest version. Edits are kept.
