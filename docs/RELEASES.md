@@ -1,5 +1,9 @@
 # Releases
 
+## v0.1.10 - 2026-11-01
+- Fixed the Cancel button being clipped on the Add item, rename and New Section forms (the input's intrinsic width forced the form wider than the panel). Verified at 390px.
+
+
 ## v0.1.9 - 2026-11-01
 - Rename any section (Trello or custom) with the pencil in its header; Save/Cancel inline. Duplicate and empty names are rejected; renaming back to the original name clears the override. Names are saved in edits (`secNames`).
 
