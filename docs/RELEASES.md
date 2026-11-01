@@ -1,5 +1,10 @@
 # Releases
 
+## v0.1.8 - 2026-11-01
+- Reorder sections: drag the grip (⠿) on a section header. While dragging, all sections shrink to headers so the target is easy to hit; a gold bar shows whether the drop lands above or below the section under your finger.
+- Section order is saved in edits (`order`) with the other customizations; new sections append to the end.
+
+
 ## v0.1.7 - 2026-11-01
 - Ocean background: blue gradient with small bubbles of varied sizes rising, plus fish (7 colored, 5 tiny silver), 2 jellyfish, a sea turtle, a seahorse and a crab walking the bottom. All swim at random (random depth changes, occasional turn-arounds, wrap at the edges).
 - Animals are drawn on a canvas layered behind the page content, so they can never pass in front of checklist items. Section panels are 50% translucent, so animals show faintly behind panels and fully in the open water; item rows are opaque.

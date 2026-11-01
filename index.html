@@ -44,6 +44,12 @@ li button.x{flex:none;width:46px;padding:0;justify-content:center;min-height:64p
 li button.x:active{background:var(--bad);color:#fff;border-color:var(--bad)}
 .hdw{display:flex;align-items:center}
 .hdw>.hd{flex:1}
+.sdg{flex:none;width:44px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 20px/1 -apple-system,system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.sec.complete .sdg,.sec.complete .secdel{color:#fff}
+#list.reorder .sec ul{display:none}
+.sec.lifted{opacity:.35}
+.sec.before{box-shadow:0 -5px 0 0 var(--acc)}
+.sec.after{box-shadow:0 5px 0 0 var(--acc)}
 .secdel{flex:none;width:48px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 18px/1 -apple-system,system-ui,sans-serif}
 .sec.drop{outline:3px solid var(--acc);outline-offset:-3px}
 li.lifted{opacity:.35}
