@@ -242,7 +242,7 @@ $('mic').onclick=()=>{
  want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
-$('reset').onclick=()=>{done.clear();setHeard('',null);draw()};
+$('reset').onclick=()=>{done.clear();closed.clear();setHeard('',null);draw()};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!wakeLock)keepAwake()});
 draw();
 </script>
