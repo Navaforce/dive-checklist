@@ -16,8 +16,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-grad
 #sea{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 body>*:not(canvas):not(script){position:relative;z-index:1}
 body{margin:0;color:var(--ink);font:17px/1.4 -apple-system,system-ui,sans-serif;padding:calc(14px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));max-width:520px;margin-inline:auto}
-#upd{position:absolute;top:calc(6px + env(safe-area-inset-top));right:10px;width:44px;height:44px;border:0;border-radius:22px;background:transparent;color:#fff;font:700 26px/1 -apple-system,system-ui,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.5);z-index:5}
-#upd.spin{animation:spin .8s linear infinite}
+#upd{position:absolute;top:calc(6px + env(safe-area-inset-top));right:10px;min-width:44px;height:44px;padding:0 8px;display:flex;align-items:center;gap:5px;border:0;border-radius:22px;background:transparent;color:#fff;font:700 26px/1 -apple-system,system-ui,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.5);z-index:5}
+#upd small{font:600 13px/1 -apple-system,system-ui,sans-serif}
+#upd.spin b{display:inline-block;font-weight:700;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 h1{font-size:22px;margin:0 0 2px;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 .sub{color:#d6eef7;font-size:14px;margin:0 0 14px;text-shadow:0 1px 3px rgba(0,0,0,.45)}
@@ -93,7 +94,7 @@ li.done button .nm{text-decoration:line-through;opacity:.75}
 </head>
 <body>
 <canvas id="sea" aria-hidden="true"></canvas>
-<button id="upd" type="button" aria-label="Get latest update" title="Get latest update">↻</button>
+<button id="upd" type="button" aria-label="Get latest update" title="Get latest update"><b>↻</b><small id="ver"></small></button>
 <h1>Gear Check</h1>
 <p class="sub">Tap Start Listening, then say each item.</p>
 <button id="mic" type="button">Start Listening</button>
@@ -692,6 +693,7 @@ $('mic').onclick=()=>{
  unlockSpeech();want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
+const VERSION='v0.1.13';$('ver').textContent=VERSION;
 $('upd').onclick=()=>{stopAll();$('upd').classList.add('spin');location.replace(location.pathname+'?v='+Date.now())};
 $('reset').onclick=()=>{done.clear();closed.clear();setHeard('',null);draw()};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!wakeLock)keepAwake()});
