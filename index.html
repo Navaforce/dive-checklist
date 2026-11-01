@@ -299,6 +299,48 @@ function deleteSection(sid){
  saveEdits();rebuild();draw();
 }
 
+function reorderSection(id,target,before){
+ const ids=SECS.map(s=>s.id).filter(x=>x!==id);
+ const i=ids.indexOf(target);
+ if(i<0)return;
+ ids.splice(before?i:i+1,0,id);
+ edits.order=ids;saveEdits();rebuild();draw();
+}
+function startSecDrag(e,sec,box){
+ e.preventDefault();
+ const h=e.currentTarget;
+ try{h.setPointerCapture(e.pointerId)}catch(x){}
+ dragging=true;
+ const hw=box.querySelector('.hdw');
+ const r=hw.getBoundingClientRect();
+ const ghost=document.createElement('div');ghost.className='sec ghost';ghost.style.width=r.width+'px';
+ ghost.append(hw.cloneNode(true));
+ document.body.append(ghost);
+ const root=$('list');root.classList.add('reorder');box.classList.add('lifted');
+ const dx=e.clientX-r.left,dy=e.clientY-r.top;
+ let tgt=null,before=true;
+ const place=(x,y)=>{ghost.style.left=(x-dx)+'px';ghost.style.top=(y-dy)+'px'};
+ place(e.clientX,e.clientY);
+ const clear=()=>document.querySelectorAll('.sec.before,.sec.after').forEach(n=>n.classList.remove('before','after'));
+ const move=ev=>{
+  place(ev.clientX,ev.clientY);
+  if(ev.clientY<90)window.scrollBy(0,-14);else if(ev.clientY>window.innerHeight-90)window.scrollBy(0,14);
+  const el=document.elementFromPoint(ev.clientX,ev.clientY);
+  const s=el&&el.closest?el.closest('.sec'):null;
+  clear();
+  if(s&&s!==box&&s.dataset.sec){
+   const b=s.getBoundingClientRect();
+   before=ev.clientY<b.top+b.height/2;
+   s.classList.add(before?'before':'after');tgt=s.dataset.sec;
+  }else tgt=null;
+ };
+ const end=ev=>{
+  h.removeEventListener('pointermove',move);h.removeEventListener('pointerup',end);h.removeEventListener('pointercancel',end);
+  ghost.remove();clear();root.classList.remove('reorder');dragging=false;pendingDraw=false;
+  if(ev.type==='pointerup'&&tgt)reorderSection(sec.id,tgt,before);else draw();
+ };
+ h.addEventListener('pointermove',move);h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end);
+}
 function startDrag(e,it,li){
  e.preventDefault();
  const h=e.currentTarget;
