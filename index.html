@@ -299,7 +299,17 @@ function addSection(name){
  edits.sections.push({id:uid('x'),name});
  saveEdits();rebuild();return true;
 }
+function renameSection(sid,name){
+ name=name.replace(/\s+/g,' ').trim();
+ if(!name)return false;
+ if(SECS.some(s=>s.id!==sid&&norm(s.name)===norm(name)))return false;
+ const bi=SECTIONS[+sid.slice(1)];
+ if(sid[0]==='s'&&bi&&bi.name===name)delete edits.secNames[sid];
+ else edits.secNames[sid]=name;
+ saveEdits();rebuild();return true;
+}
 function deleteSection(sid){
+ delete edits.secNames[sid];
  edits.sections=edits.sections.filter(s=>s.id!==sid);
  edits.added=edits.added.filter(a=>a.sec!==sid);
  Object.keys(edits.moved).forEach(k=>{if(edits.moved[k]===sid)delete edits.moved[k]});
