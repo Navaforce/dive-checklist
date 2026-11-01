@@ -31,12 +31,24 @@ ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .sec.complete>.hd,.sec.complete>.hd .ct{color:#fff}
 li .note{font-weight:500;font-size:14px;color:var(--mut)}
 li.done .note{color:#bfe8d0}
+li{display:flex;gap:8px;align-items:stretch}
+li button.chk{flex:1;width:auto}
+li button.x{flex:none;width:56px;min-height:64px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--mut);font:700 20px/1 -apple-system,system-ui,sans-serif}
+li button.x:active{background:var(--bad);color:#fff;border-color:var(--bad)}
+.sec.complete li button.x{background:#12392b;border-color:var(--ok)}
+li button.addb{width:100%;min-height:52px;border-radius:14px;border:1.5px dashed var(--mut);background:transparent;color:var(--mut);font:700 17px/1.2 -apple-system,system-ui,sans-serif}
+.addf{display:flex;gap:8px;width:100%}
+.addf input{flex:1;min-width:0;min-height:52px;border-radius:12px;border:1.5px solid var(--acc);background:#fff;color:#111;padding:0 12px;font:600 17px/1.2 -apple-system,system-ui,sans-serif}
+.addf .go,.addf .cx{flex:none;width:auto;min-height:52px;padding:0 14px;border-radius:12px;font:800 16px/1.2 -apple-system,system-ui,sans-serif}
+.addf .go{border:0;background:var(--ok);color:#fff}
+.addf .cx{border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
 li button{width:100%;min-height:64px;display:flex;align-items:center;gap:14px;padding:0 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 20px/1.2 -apple-system,system-ui,sans-serif;text-align:left}
 li button .box{flex:none;width:30px;height:30px;border-radius:8px;border:2px solid var(--mut);display:grid;place-items:center;font-size:20px;color:transparent}
 li.done button{border-color:var(--ok);background:#12392b}
 li.done button .box{background:var(--ok);border-color:var(--ok);color:#fff}
 li.done button .nm{text-decoration:line-through;opacity:.75}
 .row{display:flex;gap:10px;margin-top:14px}
+.row button[hidden]{display:none}
 .row button{flex:1;min-height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 16px/1.2 -apple-system,system-ui,sans-serif}
 </style>
 </head>
@@ -47,7 +59,7 @@ li.done button .nm{text-decoration:line-through;opacity:.75}
 <div id="heard" aria-live="polite">Heard: <b>nothing yet</b></div>
 <div class="prog" id="prog"></div>
 <div id="list"></div>
-<div class="row"><button id="reset" type="button">Reset</button></div>
+<div class="row"><button id="reset" type="button">Reset</button><button id="restore" type="button" hidden>Restore removed</button></div>
 <script>
 "use strict";
 const SECTIONS=[
@@ -126,38 +138,86 @@ const SECTIONS=[
 ];
 const $=id=>document.getElementById(id);
 const norm=t=>' '+t.toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim()+' ';
-const ITEMS=[];
-SECTIONS.forEach((s,si)=>s.items.forEach(it=>{
- it.sec=si;
+const STORE='gearcheck.edits.v1';
+function loadEdits(){
+ try{const e=JSON.parse(localStorage.getItem(STORE)||'{}');return{removed:Array.isArray(e.removed)?e.removed:[],added:Array.isArray(e.added)?e.added:[]}}catch(e){return{removed:[],added:[]}}
+}
+function saveEdits(){try{localStorage.setItem(STORE,JSON.stringify(edits))}catch(e){}}
+const edits=loadEdits();
+function prep(it,si,id){
+ it.sec=si;it.id=id;
  const own=norm(it.n).trim();
- it.aliases=(it.noOwn?[]:[own]).concat(it.a.map(a=>norm(a).trim()));
- it.label=it.n+(it.note?' ('+it.note+')':'');
- ITEMS.push(it);
-}));
-const ALIASES=[];
-ITEMS.forEach((it,i)=>it.aliases.forEach(a=>ALIASES.push({a:' '+a+' ',len:a.length,i})));
-ALIASES.sort((x,y)=>y.len-x.len);
+ it.aliases=(it.noOwn?[]:[own]).concat((it.a||[]).map(a=>norm(a).trim()));
+ return it;
+}
+const BASE=[];
+SECTIONS.forEach((s,si)=>s.items.forEach(it=>BASE.push(prep(it,si,'d'+si+':'+it.n))));
+let ITEMS=[],ALIASES=[];
+function rebuild(){
+ const rm=new Set(edits.removed);
+ ITEMS=BASE.filter(it=>!rm.has(it.id));
+ edits.added.forEach(a=>{
+  if(!SECTIONS[a.sec])return;
+  const own=norm(a.n).trim();
+  const al=[own];
+  if(own.endsWith('s'))al.push(own.slice(0,-1));else al.push(own+'s');
+  ITEMS.push({n:a.n,sec:a.sec,id:a.id,aliases:al,custom:true});
+ });
+ ITEMS.sort((x,y)=>x.sec-y.sec);
+ ALIASES=[];
+ ITEMS.forEach((it,i)=>it.aliases.forEach(a=>ALIASES.push({a:' '+a+' ',len:a.length,i})));
+ ALIASES.sort((x,y)=>y.len-x.len);
+ const ids=new Set(ITEMS.map(it=>it.id));
+ [...done].forEach(id=>{if(!ids.has(id))done.delete(id)});
+}
 const done=new Set();
 const closed=new Set();
+let adding=-1,addDraft='';
 
 function secStats(si){
  let d=0,t=0;
- ITEMS.forEach((it,i)=>{if(it.sec===si){t++;if(done.has(i))d++}});
+ ITEMS.forEach(it=>{if(it.sec===si){t++;if(done.has(it.id))d++}});
  return{d,t};
 }
+const isComplete=si=>{const s=secStats(si);return s.t>0&&s.d===s.t};
+function settle(si,was){
+ const now=isComplete(si);
+ if(now&&!was)closed.add(si);
+ if(!now)closed.delete(si);
+}
 function setDone(i,val){
- const si=ITEMS[i].sec;
- const wasComplete=secStats(si).d===secStats(si).t;
- val?done.add(i):done.delete(i);
- const s=secStats(si);
- if(s.d===s.t&&!wasComplete)closed.add(si);
- if(s.d!==s.t)closed.delete(si);
+ const it=ITEMS[i],was=isComplete(it.sec);
+ val?done.add(it.id):done.delete(it.id);
+ settle(it.sec,was);
+}
+function removeItem(i){
+ const it=ITEMS[i],was=isComplete(it.sec);
+ if(it.custom)edits.added=edits.added.filter(a=>a.id!==it.id);
+ else edits.removed.push(it.id);
+ saveEdits();rebuild();settle(it.sec,was);draw();
+}
+function addItem(si,name){
+ name=name.replace(/\s+/g,' ').trim();
+ if(!name)return false;
+ const key=norm(name);
+ if(ITEMS.some(it=>it.sec===si&&norm(it.n)===key))return false;
+ const was=isComplete(si);
+ edits.added.push({id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),n:name,sec:si});
+ saveEdits();rebuild();settle(si,was);
+ return true;
+}
+function restoreRemoved(){
+ const was=SECTIONS.map((_,si)=>isComplete(si));
+ edits.removed=[];saveEdits();rebuild();
+ SECTIONS.forEach((_,si)=>settle(si,was[si]));
+ draw();
 }
 
 function draw(){
  const root=$('list');root.textContent='';
+ let focusEl=null;
  SECTIONS.forEach((sec,si)=>{
-  const st=secStats(si),complete=st.d===st.t;
+  const st=secStats(si),complete=isComplete(si);
   const box=document.createElement('section');
   box.className='sec'+(complete?' complete':'')+(closed.has(si)?' closed':'');
   const hd=document.createElement('button');hd.type='button';hd.className='hd';
@@ -171,25 +231,48 @@ function draw(){
   const ul=document.createElement('ul');
   ITEMS.forEach((it,i)=>{
    if(it.sec!==si)return;
-   const li=document.createElement('li');li.className=done.has(i)?'done':'';
-   const b=document.createElement('button');b.type='button';
+   const li=document.createElement('li');li.className=done.has(it.id)?'done':'';
+   const b=document.createElement('button');b.type='button';b.className='chk';
    const bx=document.createElement('span');bx.className='box';bx.textContent='✓';
    const nm=document.createElement('span');nm.className='nm';nm.textContent=it.n;
    b.append(bx,nm);
    if(it.note){const nt=document.createElement('span');nt.className='note';nt.textContent='('+it.note+')';b.append(nt)}
-   b.onclick=()=>{setDone(i,!done.has(i));draw()};
-   li.append(b);ul.append(li);
+   b.onclick=()=>{setDone(i,!done.has(it.id));draw()};
+   const x=document.createElement('button');x.type='button';x.className='x';x.textContent='✕';
+   x.setAttribute('aria-label','Remove '+it.n);
+   x.onclick=()=>removeItem(i);
+   li.append(b,x);ul.append(li);
   });
+  const addLi=document.createElement('li');
+  if(adding===si){
+   const f=document.createElement('form');f.className='addf';
+   const inp=document.createElement('input');inp.type='text';inp.value=addDraft;inp.placeholder='New item name';
+   inp.autocapitalize='words';inp.autocomplete='off';inp.setAttribute('aria-label','New item in '+sec.name);
+   inp.oninput=()=>{addDraft=inp.value};
+   const ok=document.createElement('button');ok.type='submit';ok.className='go';ok.textContent='Add';
+   const no=document.createElement('button');no.type='button';no.className='cx';no.textContent='Cancel';
+   no.onclick=()=>{adding=-1;addDraft='';draw()};
+   f.onsubmit=e=>{e.preventDefault();if(addItem(si,inp.value)){addDraft='';draw()}else inp.focus()};
+   f.append(inp,ok,no);addLi.append(f);
+   focusEl=focusEl||inp;
+  }else{
+   const ab=document.createElement('button');ab.type='button';ab.className='addb';ab.textContent='+ Add item';
+   ab.onclick=()=>{adding=si;addDraft='';draw()};
+   addLi.append(ab);
+  }
+  ul.append(addLi);
   box.append(hd,ul);root.append(box);
  });
- $('prog').textContent=done.size+' of '+ITEMS.length+' checked'+(done.size===ITEMS.length?' — all set':'');
+ $('prog').textContent=done.size+' of '+ITEMS.length+' checked'+(ITEMS.length&&done.size===ITEMS.length?' — all set':'');
+ const rb=$('restore');rb.hidden=!edits.removed.length;rb.textContent='Restore removed ('+edits.removed.length+')';
+ if(focusEl&&focusEl.focus)focusEl.focus();
 }
 function matchText(text){
  let t=norm(text);const hit=[];
  ALIASES.forEach(x=>{
   if(!t.includes(x.a))return;
   t=t.split(x.a).join(' ');
-  if(!done.has(x.i)&&!hit.includes(x.i))hit.push(x.i);
+  if(!done.has(ITEMS[x.i].id)&&!hit.includes(x.i))hit.push(x.i);
  });
  hit.forEach(i=>setDone(i,true));
  if(hit.length)draw();
@@ -198,7 +281,7 @@ function matchText(text){
 function setHeard(t,hit){
  const h=$('heard');h.textContent='Heard: ';
  const b=document.createElement('b');b.textContent=t||'nothing yet';h.append(b);
- if(hit&&hit.length)h.append(' → checked '+hit.map(i=>ITEMS[i].name).join(', '));
+ if(hit&&hit.length)h.append(' → checked '+hit.map(i=>ITEMS[i].n).join(', '));
 }
 
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -242,8 +325,10 @@ $('mic').onclick=()=>{
  want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
+$('restore').onclick=restoreRemoved;
 $('reset').onclick=()=>{done.clear();closed.clear();setHeard('',null);draw()};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!wakeLock)keepAwake()});
+rebuild();
 draw();
 </script>
 </body>

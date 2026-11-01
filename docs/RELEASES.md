@@ -1,5 +1,12 @@
 # Releases
 
+## v0.1.5 - 2026-11-01
+- Full checklist imported from the private Trello board "Freediving": 4 lists become 4 sections (Dive Clothing, Dive Equipment, Other Equipment, Kayak), 64 items taken from each card's checklist (Buoy listed in both Gun and Buoy cards appears once).
+- A section closes and turns green when all its items are checked; unchecking an item reopens it. Tap a header to open or close manually.
+- Voice matching uses longest phrase first ("belt reel" does not also check "belt"); mishearing aliases added per item. Dry Bag (Other Equipment) is "dry bag", Kayak's is "kayak dry bag".
+- Source of truth for items is the SECTIONS array in index.html; re-sync from Trello by re-reading the board.
+
+
 ## v0.1.4 - 2026-11-01
 - Stop Listening fixed: stopping during the auto-restart gap no longer restarts; UI resets immediately.
 - Diagnostics box removed; mic-blocked message shows in the Heard line.
