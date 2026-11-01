@@ -1,5 +1,11 @@
 # Releases
 
+## v0.1.12 - 2026-11-01
+- Voice query: while listening, say "what am I missing" (also "what's left", "what do I still need", "what am I forgetting"). The app reads the unchecked items aloud grouped by section and shows them in the Heard box. Listening pauses during the readout so it doesn't check items from its own voice, then resumes.
+- Refresh icon (top right, white): stops listening and reloads the page with a cache-busting URL to pull the latest version. Edits are kept.
+- Removed the Restore removed button; deleted/removed items can no longer be brought back from the UI.
+- Added a small octopus and two squid to the ocean animation.
+
 ## v0.1.11 - 2026-11-01
 - Every section (Trello or custom) has an X in its header. It opens a dialog: "Delete section only" moves its items to a Loose Items tray at the top; "Delete section and all items" removes them (items return via Restore removed). Empty sections get a single Delete button. Escape, backdrop tap or Cancel closes.
 - Loose Items tray: items work like any row (check, voice, rename, remove) and can be dragged into any section. Loose items count toward overall progress only.
