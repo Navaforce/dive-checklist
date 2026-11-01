@@ -194,8 +194,7 @@ function rebuild(){
  const mk=Object.keys(edits.moved);
  movedL.sort((a,b)=>mk.indexOf(a.id)-mk.indexOf(b.id));
  const added=edits.added.filter(a=>sid.has(a.sec)).map(a=>{
-  const own=norm(a.n).trim();
-  return{n:a.n,sec:a.sec,id:a.id,custom:true,aliases:[own,own.endsWith('s')?own.slice(0,-1):own+'s']};
+  return{n:a.n,sec:a.sec,id:a.id,custom:true,aliases:aliasesFor(a.n)};
  });
  const order=new Map(SECS.map((s,i)=>[s.id,i]));
  ITEMS=native.concat(movedL,added).map((it,k)=>({it,k}))
