@@ -204,6 +204,7 @@ function rebuild(){
   SECS=SECS.map((s,i)=>({s,r:rank(s,i)})).sort((a,b)=>a.r-b.r).map(x=>x.s);
  }
  const sid=new Set(SECS.map(s=>s.id));
+ sid.add(LOOSE);
  const rm=new Set(edits.removed);
  const native=[],movedL=[];
  BASE.forEach(it=>{
