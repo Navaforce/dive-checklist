@@ -182,6 +182,7 @@ function loadEdits(){
 }
 function saveEdits(){try{localStorage.setItem(STORE,JSON.stringify(edits))}catch(e){}}
 const edits=loadEdits();
+const LOOSE='loose';
 const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 function prep(it,sid,id){
  it.home=sid;it.sec=sid;it.id=id;
@@ -268,7 +269,12 @@ function addItem(sid,name){
 }
 function restoreRemoved(){
  const was=SECS.map(s=>isComplete(s.id));
- edits.removed=[];saveEdits();rebuild();
+ edits.removed=[];
+ if(edits.deletedSecs.length){
+  edits.deletedSecs=[];
+  Object.keys(edits.moved).forEach(k=>{if(edits.moved[k]===LOOSE)delete edits.moved[k]});
+ }
+ saveEdits();rebuild();
  SECS.forEach((s,i)=>settle(s.id,was[i]));
  draw();
 }
