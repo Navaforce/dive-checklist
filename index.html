@@ -428,8 +428,8 @@ function matchText(text,key){
  const sk=key===undefined?{}:(seen[key]||(seen[key]={}));
  GROUPS.forEach(g=>{
   if(!t.includes(g.a))return;
-  const occ=t.split(g.a).length-1;
-  t=t.split(g.a).join(' ');
+  let occ=0;
+  while(t.includes(g.a)){t=t.replace(g.a,' ');occ++}
   const applied=sk[g.sig]||0;
   if(occ<=applied)return;
   sk[g.sig]=occ;
