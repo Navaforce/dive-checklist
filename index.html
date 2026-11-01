@@ -322,13 +322,57 @@ function renameSection(sid,name){
  else edits.secNames[sid]=name;
  saveEdits();rebuild();return true;
 }
-function deleteSection(sid){
+function dropSection(sid){
+ if(sid[0]==='s')edits.deletedSecs.push(sid);
+ else edits.sections=edits.sections.filter(s=>s.id!==sid);
  delete edits.secNames[sid];
- edits.sections=edits.sections.filter(s=>s.id!==sid);
- edits.added=edits.added.filter(a=>a.sec!==sid);
- Object.keys(edits.moved).forEach(k=>{if(edits.moved[k]===sid)delete edits.moved[k]});
+ edits.order=edits.order.filter(x=>x!==sid);
  closed.delete(sid);
+ if(adding===sid)adding=null;
+ if(renamingSec===sid)renamingSec=null;
  saveEdits();rebuild();draw();
+}
+function deleteSectionAndItems(sid){
+ ITEMS.filter(it=>it.sec===sid).forEach(it=>{
+  if(it.custom)edits.added=edits.added.filter(a=>a.id!==it.id);
+  else{delete edits.moved[it.id];edits.removed.push(it.id)}
+ });
+ dropSection(sid);
+}
+function deleteSectionKeepItems(sid){
+ ITEMS.filter(it=>it.sec===sid).forEach(it=>{
+  if(it.custom){const a=edits.added.find(x=>x.id===it.id);if(a)a.sec=LOOSE}
+  else edits.moved[it.id]=LOOSE;
+ });
+ dropSection(sid);
+}
+function askDeleteSection(sec){
+ const n=ITEMS.filter(it=>it.sec===sec.id).length;
+ const ov=document.createElement('div');ov.className='modal';
+ const box=document.createElement('div');box.className='mbox';
+ box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label','Delete section');
+ const h=document.createElement('h2');h.textContent='Delete "'+sec.name+'"?';
+ const p=document.createElement('p');
+ p.textContent=n?'This section has '+n+(n===1?' item':' items')+'. What should happen to '+(n===1?'it':'them')+'?':'This section is empty.';
+ box.append(h,p);
+ const onKey=e=>{if(e.key==='Escape')close()};
+ const close=()=>{ov.remove();document.removeEventListener('keydown',onKey)};
+ const btn=(cls,txt,sub,fn)=>{
+  const b=document.createElement('button');b.type='button';b.className='mb '+cls;
+  b.append(document.createTextNode(txt));
+  if(sub){const s=document.createElement('span');s.className='msub';s.textContent=sub;b.append(s)}
+  b.onclick=()=>{close();if(fn)fn()};
+  box.append(b);return b;
+ };
+ if(n){
+  btn('keep','Delete section only','Items move to Loose Items at the top',()=>deleteSectionKeepItems(sec.id));
+  btn('danger','Delete section and '+(n===1?'its item':'all '+n+' items'),'Items go to Restore removed',()=>deleteSectionAndItems(sec.id));
+ }else btn('danger','Delete section','',()=>deleteSectionAndItems(sec.id));
+ const c=btn('cancel','Cancel','',null);
+ ov.onclick=e=>{if(e.target===ov)close()};
+ document.addEventListener('keydown',onKey);
+ ov.append(box);document.body.append(ov);
+ c.focus();
 }
 
 function reorderSection(id,target,before){
