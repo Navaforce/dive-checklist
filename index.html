@@ -213,7 +213,7 @@ function rebuild(){
   if(rn){const p=parseLabel(rn);it.n=p.n;it.note=p.note;it.aliases=aliasesFor(p.n)}
   else{it.n=it.orig.n;it.note=it.orig.note;it.aliases=it.orig.aliases}
   const m=edits.moved[it.id];
-  it.sec=m&&sid.has(m)?m:it.home;
+  it.sec=m&&sid.has(m)?m:(sid.has(it.home)?it.home:LOOSE);
   (it.sec!==it.home?movedL:native).push(it);
  });
  const mk=Object.keys(edits.moved);
