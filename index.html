@@ -218,10 +218,11 @@ function rebuild(){
  });
  const mk=Object.keys(edits.moved);
  movedL.sort((a,b)=>mk.indexOf(a.id)-mk.indexOf(b.id));
- const added=edits.added.filter(a=>sid.has(a.sec)).map(a=>{
-  return{n:a.n,sec:a.sec,id:a.id,custom:true,aliases:aliasesFor(a.n)};
+ const added=edits.added.map(a=>{
+  return{n:a.n,sec:sid.has(a.sec)?a.sec:LOOSE,id:a.id,custom:true,aliases:aliasesFor(a.n)};
  });
  const order=new Map(SECS.map((s,i)=>[s.id,i]));
+ order.set(LOOSE,SECS.length);
  ITEMS=native.concat(movedL,added).map((it,k)=>({it,k}))
   .sort((x,y)=>order.get(x.it.sec)-order.get(y.it.sec)||x.k-y.k).map(x=>x.it);
  const g=new Map();
