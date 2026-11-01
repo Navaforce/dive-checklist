@@ -1,5 +1,9 @@
 # Releases
 
+## v0.1.9 - 2026-11-01
+- Rename any section (Trello or custom) with the pencil in its header; Save/Cancel inline. Duplicate and empty names are rejected; renaming back to the original name clears the override. Names are saved in edits (`secNames`).
+
+
 ## v0.1.8 - 2026-11-01
 - Reorder sections: drag the grip (⠿) on a section header. While dragging, all sections shrink to headers so the target is easy to hit; a gold bar shows whether the drop lands above or below the section under your finger.
 - Section order is saved in edits (`order`) with the other customizations; new sections append to the end.

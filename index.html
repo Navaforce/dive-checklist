@@ -44,6 +44,9 @@ li button.x{flex:none;width:46px;padding:0;justify-content:center;min-height:64p
 li button.x:active{background:var(--bad);color:#fff;border-color:var(--bad)}
 .hdw{display:flex;align-items:center}
 .hdw>.hd{flex:1}
+.secedit{flex:none;width:40px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 18px/1 -apple-system,system-ui,sans-serif}
+.secrename{padding:8px 10px}
+.sec.complete .secedit{color:#fff}
 .sdg{flex:none;width:44px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 20px/1 -apple-system,system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .sec.complete .sdg,.sec.complete .secdel{color:#fff}
 #list.reorder .sec ul{display:none}
@@ -190,7 +193,7 @@ SECTIONS.forEach((s,si)=>s.items.forEach(it=>BASE.push(prep(it,'s'+si,'d'+si+':'
 let SECS=[],ITEMS=[],GROUPS=[];
 const done=new Set();
 const closed=new Set();
-let editing=null,editDraft='',adding=null,addDraft='',addingSec=false,secDraft='',dragging=false,pendingDraw=false;
+let renamingSec=null,renameDraft='',editing=null,editDraft='',adding=null,addDraft='',addingSec=false,secDraft='',dragging=false,pendingDraw=false;
 function rebuild(){
  SECS=SECTIONS.map((s,si)=>({id:'s'+si,name:s.name})).concat(edits.sections.map(s=>({id:s.id,name:s.name,custom:true})));
  SECS.forEach(s=>{if(edits.secNames[s.id])s.name=edits.secNames[s.id]});
@@ -471,7 +474,7 @@ function draw(){
    x.onclick=()=>removeItem(i);
    const ed=document.createElement('button');ed.type='button';ed.className='ed';ed.textContent='✎';
    ed.setAttribute('aria-label','Edit '+it.n);
-   ed.onclick=()=>{editing=it.id;editDraft=labelOf(it);adding=null;addingSec=false;draw()};
+   ed.onclick=()=>{renamingSec=null;editing=it.id;editDraft=labelOf(it);adding=null;addingSec=false;draw()};
    li.append(b,dg,ed,x);ul.append(li);
   });
   const addLi=document.createElement('li');
@@ -488,7 +491,7 @@ function draw(){
    focusEl=inp;
   }else{
    const ab=document.createElement('button');ab.type='button';ab.className='addb';ab.textContent='+ Add item';
-   ab.onclick=()=>{adding=sid;addDraft='';addingSec=false;editing=null;draw()};
+   ab.onclick=()=>{renamingSec=null;adding=sid;addDraft='';addingSec=false;editing=null;draw()};
    addLi.append(ab);
   }
   ul.append(addLi);
@@ -508,7 +511,7 @@ function draw(){
   focusEl=inp;
  }else{
   const nb=document.createElement('button');nb.type='button';nb.className='addb';nb.textContent='+ New Section';
-  nb.onclick=()=>{addingSec=true;secDraft='';adding=null;editing=null;draw()};
+  nb.onclick=()=>{renamingSec=null;addingSec=true;secDraft='';adding=null;editing=null;draw()};
   ns.append(nb);
  }
  $('prog').textContent=done.size+' of '+ITEMS.length+' checked'+(ITEMS.length&&done.size===ITEMS.length?' — all set':'');
