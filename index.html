@@ -130,7 +130,7 @@ const ITEMS=[];
 SECTIONS.forEach((s,si)=>s.items.forEach(it=>{
  it.sec=si;
  const own=norm(it.n).trim();
- it.aliases=[own].concat(it.a.map(a=>norm(a).trim()));
+ it.aliases=(it.noOwn?[]:[own]).concat(it.a.map(a=>norm(a).trim()));
  it.label=it.n+(it.note?' ('+it.note+')':'');
  ITEMS.push(it);
 }));
