@@ -349,6 +349,20 @@ function draw(){
   const ul=document.createElement('ul');
   ITEMS.forEach((it,i)=>{
    if(it.sec!==sid)return;
+   if(editing===it.id){
+    const el=document.createElement('li');
+    const f=document.createElement('form');f.className='addf';
+    const inp=document.createElement('input');inp.type='text';inp.value=editDraft;inp.dataset.sel='1';
+    inp.autocapitalize='words';inp.autocomplete='off';inp.setAttribute('aria-label','Rename '+it.n);
+    inp.oninput=()=>{editDraft=inp.value};
+    const ok=document.createElement('button');ok.type='submit';ok.className='go';ok.textContent='Save';
+    const no=document.createElement('button');no.type='button';no.className='cx';no.textContent='Cancel';
+    no.onclick=()=>{editing=null;editDraft='';draw()};
+    f.onsubmit=e=>{e.preventDefault();if(renameItem(it.id,inp.value)){editing=null;editDraft='';draw()}else inp.focus()};
+    f.append(inp,ok,no);el.append(f);ul.append(el);
+    focusEl=inp;
+    return;
+   }
    const li=document.createElement('li');li.className=done.has(it.id)?'done':'';
    const b=document.createElement('button');b.type='button';b.className='chk';
    const bx=document.createElement('span');bx.className='box';bx.textContent='✓';
