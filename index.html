@@ -47,11 +47,12 @@ li button.dg{touch-action:none;user-select:none;-webkit-user-select:none;cursor:
 li button.x{flex:none;width:46px;padding:0;justify-content:center;min-height:64px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--mut);font:700 20px/1 -apple-system,system-ui,sans-serif}
 li button.x:active{background:var(--bad);color:#fff;border-color:var(--bad)}
 .hdw{display:flex;align-items:center}
-.hdw>.hd{flex:1}
-.secedit{flex:none;width:40px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 18px/1 -apple-system,system-ui,sans-serif}
+.hdw>.hd{flex:1;min-width:0}
+.hd .ct{white-space:nowrap}
+.secedit{flex:none;width:34px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 18px/1 -apple-system,system-ui,sans-serif}
 .secrename{padding:8px 10px}
 .sec.complete .secedit{color:#fff}
-.sdg{flex:none;width:44px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 20px/1 -apple-system,system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.sdg{flex:none;width:34px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 20px/1 -apple-system,system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .sec.complete .sdg,.sec.complete .secdel{color:#fff}
 .modal{position:fixed;inset:0;z-index:100;background:rgba(0,10,25,.7);display:flex;align-items:center;justify-content:center;padding:20px}
 .mbox{width:100%;max-width:360px;background:#0a2a4a;color:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px}
@@ -69,7 +70,13 @@ li button.x:active{background:var(--bad);color:#fff;border-color:var(--bad)}
 .sec.lifted{opacity:.35}
 .sec.before{box-shadow:0 -5px 0 0 var(--acc)}
 .sec.after{box-shadow:0 5px 0 0 var(--acc)}
-.secdel{flex:none;width:48px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 18px/1 -apple-system,system-ui,sans-serif}
+.tog{flex:none;align-self:center;position:relative;width:38px;height:22px;margin:0 6px 0 0;padding:0;border:0;border-radius:11px;background:#2e9e5b;transition:background .15s}
+.tog.off{background:#c0392b}
+.tog i{position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:9px;background:#fff;transition:left .15s}
+.tog.off i{left:2px}
+.sec.skipped .hd{opacity:.6}
+.sec.skipped ul{opacity:.5}
+.secdel{flex:none;width:38px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 18px/1 -apple-system,system-ui,sans-serif}
 .sec.drop{outline:3px solid var(--acc);outline-offset:-3px}
 li.lifted{opacity:.35}
 .ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;margin:0;list-style:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
@@ -195,12 +202,15 @@ function loadEdits(){
   renamed:(e.renamed&&typeof e.renamed==='object')?e.renamed:{},
   order:Array.isArray(e.order)?e.order:[],
   secNames:(e.secNames&&typeof e.secNames==='object')?e.secNames:{},
-  deletedSecs:Array.isArray(e.deletedSecs)?e.deletedSecs:[]
+  deletedSecs:Array.isArray(e.deletedSecs)?e.deletedSecs:[],
+  off:Array.isArray(e.off)?e.off:[]
  };
 }
 function saveEdits(){try{localStorage.setItem(STORE,JSON.stringify(edits))}catch(e){}}
 const edits=loadEdits();
 const LOOSE='loose';
+const isOff=sid=>edits.off.includes(sid);
+const active=it=>!isOff(it.sec);
 const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 function prep(it,sid,id){
  it.home=sid;it.sec=sid;it.id=id;
@@ -330,6 +340,7 @@ function renameSection(sid,name){
  saveEdits();rebuild();return true;
 }
 function dropSection(sid){
+ edits.off=edits.off.filter(x=>x!==sid);
  if(sid[0]==='s')edits.deletedSecs.push(sid);
  else edits.sections=edits.sections.filter(s=>s.id!==sid);
  delete edits.secNames[sid];
@@ -496,7 +507,7 @@ function draw(){
  SECS.forEach(sec=>{
   const sid=sec.id,st=secStats(sid),complete=isComplete(sid);
   const box=document.createElement('section');
-  box.className='sec'+(complete?' complete':'')+(closed.has(sid)?' closed':'');
+  box.className='sec'+(complete&&!isOff(sid)?' complete':'')+(closed.has(sid)?' closed':'')+(isOff(sid)?' skipped':'');
   box.dataset.sec=sid;
   const hw=document.createElement('div');hw.className='hdw';
   const hd=document.createElement('button');hd.type='button';hd.className='hd';
@@ -511,6 +522,12 @@ function draw(){
   const sg=document.createElement('button');sg.type='button';sg.className='sdg';sg.textContent='⠿';
   sg.setAttribute('aria-label','Drag section '+sec.name+' to reorder');
   sg.onpointerdown=e=>startSecDrag(e,sec,box);
+  const tg=document.createElement('button');tg.type='button';tg.className='tog'+(isOff(sid)?' off':' on');
+  tg.setAttribute('role','switch');tg.setAttribute('aria-checked',isOff(sid)?'false':'true');
+  tg.setAttribute('aria-label',sec.name+(isOff(sid)?' skipped':' included')+' in count and what is missing');
+  tg.append(document.createElement('i'));
+  tg.onclick=()=>{edits.off=isOff(sid)?edits.off.filter(x=>x!==sid):edits.off.concat(sid);saveEdits();draw()};
+  hw.append(tg);
   hw.append(sg);
   const se=document.createElement('button');se.type='button';se.className='secedit';se.textContent='✎';
   se.setAttribute('aria-label','Rename section '+sec.name);
@@ -581,7 +598,8 @@ function draw(){
   nb.onclick=()=>{renamingSec=null;addingSec=true;secDraft='';adding=null;editing=null;draw()};
   ns.append(nb);
  }
- $('prog').textContent=done.size+' of '+ITEMS.length+' checked'+(ITEMS.length&&done.size===ITEMS.length?' — all set':'');
+ const act=ITEMS.filter(active),actDone=act.filter(it=>done.has(it.id)).length;
+ $('prog').textContent=actDone+' of '+act.length+' checked'+(act.length&&actDone===act.length?' — all set':'');
  if(focusEl){focusEl.focus();if(focusEl.dataset.sel)focusEl.select()}
 }
 let seen={};
@@ -598,7 +616,7 @@ function matchText(text,key){
   let need=occ-applied;
   for(const i of g.idx){
    if(need<=0)break;
-   if(!done.has(ITEMS[i].id)&&!hit.includes(i)){hit.push(i);need--}
+   if(active(ITEMS[i])&&!done.has(ITEMS[i].id)&&!hit.includes(i)){hit.push(i);need--}
   }
  });
  hit.forEach(i=>setDone(i,true));
@@ -608,7 +626,7 @@ function matchText(text,key){
 const ASK=/\bwhat( s| is| am i| do i| have i| else)?( still)? (missing|left|remaining|forgetting|forgotten|need)\b|\bwhat( else)? (do|did) i (still )?(need|forget)\b|\bwhat am i forgetting\b/;
 function missingText(){
  const by=new Map();
- ITEMS.forEach(it=>{if(done.has(it.id))return;
+ ITEMS.forEach(it=>{if(done.has(it.id)||!active(it))return;
   const sec=SECS.find(x=>x.id===it.sec);const k=sec?sec.name:'Other';
   if(!by.has(k))by.set(k,[]);by.get(k).push(it.n)});
  if(!by.size)return 'Nothing is missing. You are all set.';
@@ -693,7 +711,7 @@ $('mic').onclick=()=>{
  unlockSpeech();want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
-const VERSION='v0.1.13';$('ver').textContent=VERSION;
+const VERSION='v0.1.14';$('ver').textContent=VERSION;
 $('upd').onclick=()=>{stopAll();$('upd').classList.add('spin');location.replace(location.pathname+'?v='+Date.now())};
 $('reset').onclick=()=>{done.clear();closed.clear();setHeard('',null);draw()};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!wakeLock)keepAwake()});

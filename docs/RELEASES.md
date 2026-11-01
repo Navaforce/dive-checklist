@@ -1,5 +1,8 @@
 # Releases
 
+## v0.1.14 - 2026-11-01
+- Per-section include toggle in each header. Green: the section counts toward the checked total, and its unchecked items are read by "what am I missing". Red: the section is dimmed, skipped by the total, the readout and voice matching (so a duplicate item like Dry Bag goes to the enabled section). Saved in edits (`off`) and kept across closing and reopening. Header buttons narrowed to fit.
+
 ## v0.1.13 - 2026-11-01
 - The refresh icon now shows the app version next to it (top right), so you can confirm a refresh pulled the current build.
 
