@@ -614,7 +614,10 @@ function missingText(){
  const n=[...by.values()].reduce((a,b)=>a+b.length,0);
  return 'You are missing '+n+(n===1?' item. ':' items. ')+[...by].map(([k,v])=>k+': '+v.join(', ')+'.').join(' ');
 }
-let muted=false;
+let muted=false,keepU=null;
+function unlockSpeech(){
+ try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}catch(e){}
+}
 function speakMissing(){
  const text=missingText();
  setHeard('What am I missing?',null);
@@ -626,9 +629,13 @@ function speakMissing(){
  const finish=()=>{if(fin)return;fin=true;clearTimeout(guard);setTimeout(()=>{muted=false;if(want)start()},400)};
  const guard=setTimeout(finish,Math.max(6000,text.length*90));
  try{
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);u.rate=1;u.onend=finish;u.onerror=finish;
-  speechSynthesis.speak(u);
+  setTimeout(()=>{
+   try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=1;u.volume=1;u.onend=finish;u.onerror=finish;
+    keepU=u;speechSynthesis.resume();speechSynthesis.speak(u);
+   }catch(e){finish()}
+  },400);
  }catch(e){finish()}
 }
 function setHeard(t,hit){
@@ -682,7 +689,7 @@ function stopAll(){
  }
 $('mic').onclick=()=>{
  if(want){stopAll();return}
- want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
+ unlockSpeech();want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
 $('upd').onclick=()=>{stopAll();$('upd').classList.add('spin');location.replace(location.pathname+'?v='+Date.now())};

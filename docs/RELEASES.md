@@ -4,6 +4,7 @@
 - Voice query: while listening, say "what am I missing" (also "what's left", "what do I still need", "what am I forgetting"). The app reads the unchecked items aloud grouped by section and shows them in the Heard box. Listening pauses during the readout so it doesn't check items from its own voice, then resumes.
 - Refresh icon (top right, white): stops listening and reloads the page with a cache-busting URL to pull the latest version. Edits are kept.
 - Removed the Restore removed button; deleted/removed items can no longer be brought back from the UI.
+- Spoken readout fix: speech is unlocked on the Start Listening tap, waits 400ms after pausing the mic, and keeps a reference to the utterance (iOS dropped it silently).
 - Added a small octopus and two squid to the ocean animation.
 
 ## v0.1.11 - 2026-11-01
