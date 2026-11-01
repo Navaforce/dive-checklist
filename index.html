@@ -186,6 +186,11 @@ const closed=new Set();
 let editing=null,editDraft='',adding=null,addDraft='',addingSec=false,secDraft='',dragging=false,pendingDraw=false;
 function rebuild(){
  SECS=SECTIONS.map((s,si)=>({id:'s'+si,name:s.name})).concat(edits.sections.map(s=>({id:s.id,name:s.name,custom:true})));
+ if(edits.order.length){
+  const pos=new Map(edits.order.map((x,i)=>[x,i]));
+  const rank=(s,i)=>pos.has(s.id)?pos.get(s.id):1e6+i;
+  SECS=SECS.map((s,i)=>({s,r:rank(s,i)})).sort((a,b)=>a.r-b.r).map(x=>x.s);
+ }
  const sid=new Set(SECS.map(s=>s.id));
  const rm=new Set(edits.removed);
  const native=[],movedL=[];
