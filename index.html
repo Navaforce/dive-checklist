@@ -164,7 +164,8 @@ function loadEdits(){
   added:(Array.isArray(e.added)?e.added:[]).map(a=>({id:a.id,n:a.n,sec:fix(a.sec)})),
   sections:Array.isArray(e.sections)?e.sections:[],
   moved:(e.moved&&typeof e.moved==='object')?e.moved:{},
-  renamed:(e.renamed&&typeof e.renamed==='object')?e.renamed:{}
+  renamed:(e.renamed&&typeof e.renamed==='object')?e.renamed:{},
+  order:Array.isArray(e.order)?e.order:[]
  };
 }
 function saveEdits(){try{localStorage.setItem(STORE,JSON.stringify(edits))}catch(e){}}
