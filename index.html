@@ -193,6 +193,7 @@ const closed=new Set();
 let editing=null,editDraft='',adding=null,addDraft='',addingSec=false,secDraft='',dragging=false,pendingDraw=false;
 function rebuild(){
  SECS=SECTIONS.map((s,si)=>({id:'s'+si,name:s.name})).concat(edits.sections.map(s=>({id:s.id,name:s.name,custom:true})));
+ SECS.forEach(s=>{if(edits.secNames[s.id])s.name=edits.secNames[s.id]});
  if(edits.order.length){
   const pos=new Map(edits.order.map((x,i)=>[x,i]));
   const rank=(s,i)=>pos.has(s.id)?pos.get(s.id):1e6+i;
