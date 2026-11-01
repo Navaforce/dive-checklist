@@ -50,36 +50,148 @@ li.done button .nm{text-decoration:line-through;opacity:.75}
 <div class="row"><button id="reset" type="button">Reset</button></div>
 <script>
 "use strict";
-const ITEMS=[
- {name:'Mask',alias:['mask','masks']},
- {name:'Snorkel',alias:['snorkel','snorkle','snorkeling']},
- {name:'Fins',alias:['fins','fin','finns','pins','thins','thin','fence','fens','fines','fiends','phins','finz']},
- {name:'Dive Belt',alias:['dive belt','diving belt','weight belt','weights','belt']},
- {name:'Spear Gun',alias:['spear gun','speargun','spear','gun','spare gun']}
+const SECTIONS=[
+ {name:'Dive Clothing',items:[
+  {n:'Top',a:['wetsuit top','suit top']},
+  {n:'Bottom',a:['wetsuit bottom','suit bottom','bottoms']},
+  {n:'Booties',a:['bootie','boots']},
+  {n:'Gloves',a:['glove']}
+ ]},
+ {name:'Dive Equipment',items:[
+  {n:'Fins',a:['fin','finns','pins','thins','thin','fence','fens','fines','fiends','phins','finz']},
+  {n:'Fin Straps',a:['fin strap','fins straps','thin straps']},
+  {n:'Belt',a:['dive belt','diving belt','weight belt']},
+  {n:'Knife',a:['dive knife']},
+  {n:'Weights',a:['weight']},
+  {n:'Stringer',a:['stringers']},
+  {n:'Flashlight',a:['flash light','light','dive light']},
+  {n:'Belt Reel',a:['belt real','belt reels']},
+  {n:'Gun',a:['spear gun','speargun','spear','spare gun']},
+  {n:'Spear Cap',a:['spear tip cap','spear cover']},
+  {n:'Reel',a:['gun reel','real','reels']},
+  {n:'Load Assist',a:['loader','load assistant','load assist tool']},
+  {n:'Float Line with Connectors',a:['float line','floatline','floating line']},
+  {n:'Buoy',a:['boy','buoys','bouy','buoy float']},
+  {n:'Buoy Pump',a:['boy pump','pump','buoy hand pump']},
+  {n:'Mask',a:['masks']},
+  {n:'Mask Case',a:['mask box']},
+  {n:'Snorkel Keeper',a:['snorkel strap','snorkel clip']},
+  {n:'Snorkel',a:['snorkle','snorkeling']},
+  {n:'Line',a:['buoy line','dive line']},
+  {n:'Drop Weight',a:['drop weights','dropweight','drop way']},
+  {n:'Connectors',a:['connector','clips']},
+  {n:'Throw Flasher',a:['throw flash','throw flashing','throw light']},
+  {n:'Line Flasher',a:['line flash','line flashing','line light']},
+  {n:'Dive Flag',a:['flag','diver down flag']}
+ ]},
+ {name:'Other Equipment',items:[
+  {n:'Tickle Stick',a:['tickle','tickle sticks']},
+  {n:'Gauge',a:['lobster gauge','gage']},
+  {n:'Lobster Bag',a:['lobster bags']},
+  {n:'Snare',a:['snares']},
+  {n:'Net',a:['lobster net']},
+  {n:'Towel',a:['towels']},
+  {n:'Dive Trunks',a:['trunks','swim trunks','bathing suit']},
+  {n:'No Tears Shampoo',note:'Mask',a:['shampoo','no tears','baby shampoo']},
+  {n:'Dish Soap',note:'Suit',a:['soap','dish soup']},
+  {n:'Dive Watch',note:'Charger?',a:['watch','dive computer']},
+  {n:'Go Pro with Harness',note:'Battery Charged?',a:['gopro','go pro','gopro with harness','camera','harness']},
+  {n:'Snack',a:['snacks']},
+  {n:'Water / Electrolytes',a:['water','electrolytes','electrolyte']},
+  {n:'Change Clothes',a:['change of clothes','clothes','dry clothes']},
+  {n:'Dry Bag',a:['drybag','dry bags']},
+  {n:'Plastic Bags',note:'for fish',a:['plastic bag','fish bags','baggies']},
+  {n:'Filet Knife',a:['fillet knife','filet','fillet','fish knife']},
+  {n:'Fish Scale',a:['scale','fish scales']},
+  {n:'Hat',a:['hats','cap']},
+  {n:'Sun Screen',a:['sunscreen','sun block','sunblock']},
+  {n:'Face Covering',a:['face cover','buff','neck gaiter','gaiter']},
+  {n:'Line Diving Lanyard',a:['lanyard','line dive lanyard','diving lanyard']},
+  {n:'Cooler',a:['coolers']},
+  {n:'Ice',a:['ice bag']},
+  {n:'Gear Bin (Small)',a:['small gear bin','small bin','gear bin small']},
+  {n:'Gear Bin (Large)',a:['large gear bin','large bin','big gear bin','big bin','gear bin large']}
+ ]},
+ {name:'Kayak',items:[
+  {n:'Kayak',a:['boat','kayaks']},
+  {n:'Oar',a:['oars','paddle','paddles']},
+  {n:'Anchor',a:['anchors']},
+  {n:'Kayak Lead',a:['kayak lead weight','tie up lead','tie up']},
+  {n:'Kayak Stringer',a:['boat stringer']},
+  {n:'Mesh Dive Gear Bag',a:['mesh bag','mesh gear bag','mesh dive bag','gear bag']},
+  {n:'Dry Bag',a:['kayak dry bag','boat dry bag']},
+  {n:'Car Tie Downs',a:['tie downs','tie down','car tie down','straps']},
+  {n:'Oar Leashes',a:['oar leash','paddle leash','paddle leashes']}
+ ]}
 ];
 const $=id=>document.getElementById(id);
-const done=new Set();
 const norm=t=>' '+t.toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim()+' ';
+const ITEMS=[];
+SECTIONS.forEach((s,si)=>s.items.forEach(it=>{
+ it.sec=si;
+ const own=norm(it.n).trim();
+ it.aliases=[own].concat(it.a.map(a=>norm(a).trim()));
+ it.label=it.n+(it.note?' ('+it.note+')':'');
+ ITEMS.push(it);
+}));
+const ALIASES=[];
+ITEMS.forEach((it,i)=>it.aliases.forEach(a=>ALIASES.push({a:' '+a+' ',len:a.length,i})));
+ALIASES.sort((x,y)=>y.len-x.len);
+const done=new Set();
+const closed=new Set();
+
+function secStats(si){
+ let d=0,t=0;
+ ITEMS.forEach((it,i)=>{if(it.sec===si){t++;if(done.has(i))d++}});
+ return{d,t};
+}
+function setDone(i,val){
+ const si=ITEMS[i].sec;
+ const wasComplete=secStats(si).d===secStats(si).t;
+ val?done.add(i):done.delete(i);
+ const s=secStats(si);
+ if(s.d===s.t&&!wasComplete)closed.add(si);
+ if(s.d!==s.t)closed.delete(si);
+}
 
 function draw(){
- const ul=$('list');ul.textContent='';
- ITEMS.forEach((it,i)=>{
-  const li=document.createElement('li');li.className=done.has(i)?'done':'';
-  const b=document.createElement('button');b.type='button';
-  const box=document.createElement('span');box.className='box';box.textContent='✓';
-  const nm=document.createElement('span');nm.className='nm';nm.textContent=it.name;
-  b.append(box,nm);b.onclick=()=>{done.has(i)?done.delete(i):done.add(i);draw()};
-  li.append(b);ul.append(li);
+ const root=$('list');root.textContent='';
+ SECTIONS.forEach((sec,si)=>{
+  const st=secStats(si),complete=st.d===st.t;
+  const box=document.createElement('section');
+  box.className='sec'+(complete?' complete':'')+(closed.has(si)?' closed':'');
+  const hd=document.createElement('button');hd.type='button';hd.className='hd';
+  hd.setAttribute('aria-expanded',closed.has(si)?'false':'true');
+  const l=document.createElement('span');
+  const ch=document.createElement('span');ch.className='chev';ch.textContent='▾';
+  l.append(ch,document.createTextNode(sec.name));
+  const ct=document.createElement('span');ct.className='ct';ct.textContent=complete?'✓ '+st.t+' of '+st.t:st.d+' of '+st.t;
+  hd.append(l,ct);
+  hd.onclick=()=>{closed.has(si)?closed.delete(si):closed.add(si);draw()};
+  const ul=document.createElement('ul');
+  ITEMS.forEach((it,i)=>{
+   if(it.sec!==si)return;
+   const li=document.createElement('li');li.className=done.has(i)?'done':'';
+   const b=document.createElement('button');b.type='button';
+   const bx=document.createElement('span');bx.className='box';bx.textContent='✓';
+   const nm=document.createElement('span');nm.className='nm';nm.textContent=it.n;
+   b.append(bx,nm);
+   if(it.note){const nt=document.createElement('span');nt.className='note';nt.textContent='('+it.note+')';b.append(nt)}
+   b.onclick=()=>{setDone(i,!done.has(i));draw()};
+   li.append(b);ul.append(li);
+  });
+  box.append(hd,ul);root.append(box);
  });
  $('prog').textContent=done.size+' of '+ITEMS.length+' checked'+(done.size===ITEMS.length?' — all set':'');
 }
 function matchText(text){
- const t=norm(text);const hit=[];
- ITEMS.forEach((it,i)=>{
-  if(done.has(i))return;
-  if(it.alias.some(a=>t.includes(' '+a+' ')))hit.push(i);
+ let t=norm(text);const hit=[];
+ ALIASES.forEach(x=>{
+  if(!t.includes(x.a))return;
+  t=t.split(x.a).join(' ');
+  if(!done.has(x.i)&&!hit.includes(x.i))hit.push(x.i);
  });
- hit.forEach(i=>done.add(i));
+ hit.forEach(i=>setDone(i,true));
  if(hit.length)draw();
  return hit;
 }
