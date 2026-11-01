@@ -1,5 +1,10 @@
 # Releases
 
+## v0.1.11 - 2026-11-01
+- Every section (Trello or custom) has an X in its header. It opens a dialog: "Delete section only" moves its items to a Loose Items tray at the top; "Delete section and all items" removes them (items return via Restore removed). Empty sections get a single Delete button. Escape, backdrop tap or Cancel closes.
+- Loose Items tray: items work like any row (check, voice, rename, remove) and can be dragged into any section. Loose items count toward overall progress only.
+- Restore removed now also brings back deleted Trello sections and returns loose items to their home sections.
+
 ## v0.1.10 - 2026-11-01
 - Fixed the Cancel button being clipped on the Add item, rename and New Section forms (the input's intrinsic width forced the form wider than the panel). Verified at 390px.
 

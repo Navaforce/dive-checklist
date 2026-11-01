@@ -49,6 +49,18 @@ li button.x:active{background:var(--bad);color:#fff;border-color:var(--bad)}
 .sec.complete .secedit{color:#fff}
 .sdg{flex:none;width:44px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 20px/1 -apple-system,system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .sec.complete .sdg,.sec.complete .secdel{color:#fff}
+.modal{position:fixed;inset:0;z-index:100;background:rgba(0,10,25,.7);display:flex;align-items:center;justify-content:center;padding:20px}
+.mbox{width:100%;max-width:360px;background:#0a2a4a;color:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.mbox h2{margin:0;font:700 18px/1.2 -apple-system,system-ui,sans-serif}
+.mbox p{margin:0 0 4px;color:#cfe3f5;font:15px/1.3 -apple-system,system-ui,sans-serif}
+.mb{min-height:52px;border-radius:12px;border:1.5px solid var(--line);background:#12395f;color:#fff;font:600 16px/1.2 -apple-system,system-ui,sans-serif;padding:8px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.mb.danger{background:#b3261e;border-color:#b3261e}
+.mb.cancel{background:transparent}
+.msub{font:400 12px/1.2 -apple-system,system-ui,sans-serif;opacity:.85}
+#loose{margin:0 0 14px;border:1.5px dashed var(--line);border-radius:16px;background:rgba(4,32,58,.5);overflow:hidden}
+#loose[hidden]{display:none}
+#loose ul{padding:0 10px 10px}
+.lootitle{padding:10px 14px;font:700 14px/1.2 -apple-system,system-ui,sans-serif;color:#cfe3f5}
 #list.reorder .sec ul{display:none}
 .sec.lifted{opacity:.35}
 .sec.before{box-shadow:0 -5px 0 0 var(--acc)}
@@ -83,6 +95,7 @@ li.done button .nm{text-decoration:line-through;opacity:.75}
 <button id="mic" type="button">Start Listening</button>
 <div id="heard" aria-live="polite">Heard: <b>nothing yet</b></div>
 <div class="prog" id="prog"></div>
+<div id="loose" hidden></div>
 <div id="list"></div>
 <div id="newsec"></div>
 <div class="row"><button id="reset" type="button">Reset</button><button id="restore" type="button" hidden>Restore removed</button></div>
@@ -448,10 +461,44 @@ function startDrag(e,it,li){
  h.addEventListener('pointermove',move);h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end);
 }
 
+let focusEl=null;
+function rowEl(it,i){
+  if(editing===it.id){
+   const el=document.createElement('li');
+   const f=document.createElement('form');f.className='addf';
+   const inp=document.createElement('input');inp.type='text';inp.value=editDraft;inp.dataset.sel='1';
+   inp.autocapitalize='words';inp.autocomplete='off';inp.setAttribute('aria-label','Rename '+it.n);
+   inp.oninput=()=>{editDraft=inp.value};
+   const ok=document.createElement('button');ok.type='submit';ok.className='go';ok.textContent='Save';
+   const no=document.createElement('button');no.type='button';no.className='cx';no.textContent='Cancel';
+   no.onclick=()=>{editing=null;editDraft='';draw()};
+   f.onsubmit=e=>{e.preventDefault();if(renameItem(it.id,inp.value)){editing=null;editDraft='';draw()}else inp.focus()};
+   f.append(inp,ok,no);el.append(f);
+   focusEl=inp;
+   return el;
+  }
+  const li=document.createElement('li');li.className=done.has(it.id)?'done':'';
+  const b=document.createElement('button');b.type='button';b.className='chk';
+  const bx=document.createElement('span');bx.className='box';bx.textContent='✓';
+  const nm=document.createElement('span');nm.className='nm';nm.textContent=it.n;
+  b.append(bx,nm);
+  if(it.note){const nt=document.createElement('span');nt.className='note';nt.textContent='('+it.note+')';b.append(nt)}
+  b.onclick=()=>{setDone(i,!done.has(it.id));draw()};
+  const dg=document.createElement('button');dg.type='button';dg.className='dg';dg.textContent='⠿';
+  dg.setAttribute('aria-label','Drag '+it.n+' to another section');
+  dg.onpointerdown=e=>startDrag(e,it,li);
+  const x=document.createElement('button');x.type='button';x.className='x';x.textContent='✕';
+  x.setAttribute('aria-label','Remove '+it.n);
+  x.onclick=()=>removeItem(i);
+  const ed=document.createElement('button');ed.type='button';ed.className='ed';ed.textContent='✎';
+  ed.setAttribute('aria-label','Edit '+it.n);
+  ed.onclick=()=>{renamingSec=null;editing=it.id;editDraft=labelOf(it);adding=null;addingSec=false;draw()};
+  li.append(b,dg,ed,x);return li;
+}
+
 function draw(){
  if(dragging){pendingDraw=true;return}
- const root=$('list');root.textContent='';
- let focusEl=null;
+ const root=$('list');root.textContent='';focusEl=null;
  SECS.forEach(sec=>{
   const sid=sec.id,st=secStats(sid),complete=isComplete(sid);
   const box=document.createElement('section');
@@ -475,15 +522,10 @@ function draw(){
   se.setAttribute('aria-label','Rename section '+sec.name);
   se.onclick=()=>{renamingSec=sid;renameDraft=sec.name;adding=null;editing=null;addingSec=false;draw()};
   hw.append(se);
-  if(sec.custom){
-   const dl=document.createElement('button');dl.type='button';dl.className='secdel';dl.textContent='✕';
-   dl.setAttribute('aria-label','Delete section '+sec.name);
-   dl.onclick=()=>{
-    const n=ITEMS.filter(x=>x.sec===sid).length;
-    if(!n||window.confirm('Delete "'+sec.name+'"? Items from the original list return to their first section; items you added here are deleted.'))deleteSection(sid);
-   };
-   hw.append(dl);
-  }
+  const dl=document.createElement('button');dl.type='button';dl.className='secdel';dl.textContent='✕';
+  dl.setAttribute('aria-label','Delete section '+sec.name);
+  dl.onclick=()=>askDeleteSection(sec);
+  hw.append(dl);
   if(renamingSec===sid){
    hw.textContent='';
    const f=document.createElement('form');f.className='addf secrename';
@@ -498,40 +540,7 @@ function draw(){
    focusEl=inp;
   }
   const ul=document.createElement('ul');
-  ITEMS.forEach((it,i)=>{
-   if(it.sec!==sid)return;
-   if(editing===it.id){
-    const el=document.createElement('li');
-    const f=document.createElement('form');f.className='addf';
-    const inp=document.createElement('input');inp.type='text';inp.value=editDraft;inp.dataset.sel='1';
-    inp.autocapitalize='words';inp.autocomplete='off';inp.setAttribute('aria-label','Rename '+it.n);
-    inp.oninput=()=>{editDraft=inp.value};
-    const ok=document.createElement('button');ok.type='submit';ok.className='go';ok.textContent='Save';
-    const no=document.createElement('button');no.type='button';no.className='cx';no.textContent='Cancel';
-    no.onclick=()=>{editing=null;editDraft='';draw()};
-    f.onsubmit=e=>{e.preventDefault();if(renameItem(it.id,inp.value)){editing=null;editDraft='';draw()}else inp.focus()};
-    f.append(inp,ok,no);el.append(f);ul.append(el);
-    focusEl=inp;
-    return;
-   }
-   const li=document.createElement('li');li.className=done.has(it.id)?'done':'';
-   const b=document.createElement('button');b.type='button';b.className='chk';
-   const bx=document.createElement('span');bx.className='box';bx.textContent='✓';
-   const nm=document.createElement('span');nm.className='nm';nm.textContent=it.n;
-   b.append(bx,nm);
-   if(it.note){const nt=document.createElement('span');nt.className='note';nt.textContent='('+it.note+')';b.append(nt)}
-   b.onclick=()=>{setDone(i,!done.has(it.id));draw()};
-   const dg=document.createElement('button');dg.type='button';dg.className='dg';dg.textContent='⠿';
-   dg.setAttribute('aria-label','Drag '+it.n+' to another section');
-   dg.onpointerdown=e=>startDrag(e,it,li);
-   const x=document.createElement('button');x.type='button';x.className='x';x.textContent='✕';
-   x.setAttribute('aria-label','Remove '+it.n);
-   x.onclick=()=>removeItem(i);
-   const ed=document.createElement('button');ed.type='button';ed.className='ed';ed.textContent='✎';
-   ed.setAttribute('aria-label','Edit '+it.n);
-   ed.onclick=()=>{renamingSec=null;editing=it.id;editDraft=labelOf(it);adding=null;addingSec=false;draw()};
-   li.append(b,dg,ed,x);ul.append(li);
-  });
+  ITEMS.forEach((it,i)=>{if(it.sec===sid)ul.append(rowEl(it,i))});
   const addLi=document.createElement('li');
   if(adding===sid){
    const f=document.createElement('form');f.className='addf';
@@ -552,6 +561,15 @@ function draw(){
   ul.append(addLi);
   box.append(hw,ul);root.append(box);
  });
+ const lo=$('loose');lo.textContent='';
+ const lis=ITEMS.map((it,i)=>[it,i]).filter(p=>p[0].sec===LOOSE);
+ lo.hidden=!lis.length;
+ if(lis.length){
+  const t=document.createElement('div');t.className='lootitle';t.textContent='Loose Items — drag into a section';
+  const ul=document.createElement('ul');
+  lis.forEach(p=>ul.append(rowEl(p[0],p[1])));
+  lo.append(t,ul);
+ }
  const ns=$('newsec');ns.textContent='';
  if(addingSec){
   const f=document.createElement('form');f.className='addf';
@@ -570,7 +588,7 @@ function draw(){
   ns.append(nb);
  }
  $('prog').textContent=done.size+' of '+ITEMS.length+' checked'+(ITEMS.length&&done.size===ITEMS.length?' — all set':'');
- const rb=$('restore');rb.hidden=!edits.removed.length;rb.textContent='Restore removed ('+edits.removed.length+')';
+ const rb=$('restore');const rn=edits.removed.length+edits.deletedSecs.length;rb.hidden=!rn;rb.textContent='Restore removed ('+rn+')';
  if(focusEl){focusEl.focus();if(focusEl.dataset.sel)focusEl.select()}
 }
 let seen={};
