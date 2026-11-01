@@ -413,6 +413,10 @@ function draw(){
   sg.setAttribute('aria-label','Drag section '+sec.name+' to reorder');
   sg.onpointerdown=e=>startSecDrag(e,sec,box);
   hw.append(sg);
+  const se=document.createElement('button');se.type='button';se.className='secedit';se.textContent='✎';
+  se.setAttribute('aria-label','Rename section '+sec.name);
+  se.onclick=()=>{renamingSec=sid;renameDraft=sec.name;adding=null;editing=null;addingSec=false;draw()};
+  hw.append(se);
   if(sec.custom){
    const dl=document.createElement('button');dl.type='button';dl.className='secdel';dl.textContent='✕';
    dl.setAttribute('aria-label','Delete section '+sec.name);
