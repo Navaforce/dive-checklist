@@ -196,7 +196,7 @@ const done=new Set();
 const closed=new Set();
 let renamingSec=null,renameDraft='',editing=null,editDraft='',adding=null,addDraft='',addingSec=false,secDraft='',dragging=false,pendingDraw=false;
 function rebuild(){
- SECS=SECTIONS.map((s,si)=>({id:'s'+si,name:s.name})).concat(edits.sections.map(s=>({id:s.id,name:s.name,custom:true})));
+ SECS=SECTIONS.map((s,si)=>({id:'s'+si,name:s.name})).filter(s=>!edits.deletedSecs.includes(s.id)).concat(edits.sections.map(s=>({id:s.id,name:s.name,custom:true})));
  SECS.forEach(s=>{if(edits.secNames[s.id])s.name=edits.secNames[s.id]});
  if(edits.order.length){
   const pos=new Map(edits.order.map((x,i)=>[x,i]));
