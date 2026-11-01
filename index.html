@@ -240,6 +240,7 @@ function secStats(sid){
 }
 const isComplete=sid=>{const s=secStats(sid);return s.t>0&&s.d===s.t};
 function settle(sid,was){
+ if(sid===LOOSE)return;
  const now=isComplete(sid);
  if(now&&!was)closed.add(sid);
  if(!now)closed.delete(sid);
