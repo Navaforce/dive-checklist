@@ -27,7 +27,6 @@ li.done button .box{background:var(--ok);border-color:var(--ok);color:#fff}
 li.done button .nm{text-decoration:line-through;opacity:.75}
 .row{display:flex;gap:10px;margin-top:14px}
 .row button{flex:1;min-height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 16px/1.2 -apple-system,system-ui,sans-serif}
-#dbg{margin-top:18px;padding:10px 12px;border-radius:12px;background:#0d2230;border:1px solid var(--line);color:var(--mut);font:12.5px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap}
 </style>
 </head>
 <body>
@@ -38,24 +37,19 @@ li.done button .nm{text-decoration:line-through;opacity:.75}
 <div class="prog" id="prog"></div>
 <ul id="list"></ul>
 <div class="row"><button id="reset" type="button">Reset</button></div>
-<div id="dbg" aria-label="Diagnostics"></div>
 <script>
 "use strict";
 const ITEMS=[
  {name:'Mask',alias:['mask','masks']},
  {name:'Snorkel',alias:['snorkel','snorkle','snorkeling']},
- {name:'Fins',alias:['fins','fin','finns','pins']},
+ {name:'Fins',alias:['fins','fin','finns','pins','thins','thin','fence','fens','fines','fiends','phins','finz']},
  {name:'Dive Belt',alias:['dive belt','diving belt','weight belt','weights','belt']},
  {name:'Spear Gun',alias:['spear gun','speargun','spear','gun','spare gun']}
 ];
 const $=id=>document.getElementById(id);
 const done=new Set();
 const norm=t=>' '+t.toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim()+' ';
-const dbg={support:'',mode:'',state:'idle',restarts:0,error:'-',lastRaw:'-',wake:'-'};
 
-function drawDbg(){
- $('dbg').textContent=['support: '+dbg.support,'mode: '+dbg.mode,'state: '+dbg.state,'auto-restarts: '+dbg.restarts,'last error: '+dbg.error,'screen wake lock: '+dbg.wake].join('\n');
-}
 function draw(){
  const ul=$('list');ul.textContent='';
  ITEMS.forEach((it,i)=>{
@@ -85,19 +79,16 @@ function setHeard(t,hit){
 }
 
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-dbg.support=SR?'speech recognition available':'NOT available in this browser';
-dbg.mode=(navigator.standalone||matchMedia('(display-mode: standalone)').matches)?'home-screen app':'browser tab';
-let rec=null,want=false,wakeLock=null;
+let rec=null,want=false,wakeLock=null,restartTimer=null;
 
 async function keepAwake(){
- try{if(navigator.wakeLock){wakeLock=await navigator.wakeLock.request('screen');dbg.wake='on';wakeLock.addEventListener('release',()=>{dbg.wake='released';drawDbg()})}else dbg.wake='not supported'}catch(e){dbg.wake='failed: '+e.name}
- drawDbg();
+ try{if(navigator.wakeLock){wakeLock=await navigator.wakeLock.request('screen');}}catch(e){}
 }
 function start(){
- if(!SR){dbg.state='cannot start: no speech recognition';drawDbg();return}
+ if(!want)return;
+ if(!SR){stopAll();setHeard('Voice recognition is not available in this browser. Tap items to check them.',null);return}
  rec=new SR();rec.lang='en-US';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=3;
- rec.onstart=()=>{dbg.state='listening';drawDbg()};
- rec.onresult=ev=>{
+  rec.onresult=ev=>{
   let heard='',hit=[];
   for(let i=ev.resultIndex;i<ev.results.length;i++){
    for(let a=0;a<ev.results[i].length;a++){
@@ -108,21 +99,29 @@ function start(){
   }
   setHeard(heard.trim(),hit);
  };
- rec.onerror=ev=>{dbg.error=ev.error+(ev.message?' ('+ev.message+')':'');if(ev.error==='not-allowed'||ev.error==='service-not-allowed')want=false;drawDbg()};
+ rec.onerror=ev=>{if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){stopAll();setHeard('Microphone blocked. Allow it in Settings > Safari > Microphone, then reload.',null)}};
  rec.onend=()=>{
-  if(want){dbg.restarts++;dbg.state='restarting';drawDbg();setTimeout(()=>{try{start()}catch(e){dbg.error=String(e)}},250)}
-  else{dbg.state='stopped';$('mic').classList.remove('on');$('mic').textContent='Start Listening';drawDbg()}
+  if(want){restartTimer=setTimeout(()=>{restartTimer=null;try{start()}catch(e){}},250)}
+  else{$('mic').classList.remove('on');$('mic').textContent='Start Listening'}
  };
- try{rec.start()}catch(e){dbg.error=String(e);drawDbg()}
+ try{rec.start()}catch(e){}
 }
+function stopAll(){
+ want=false;
+ if(restartTimer){clearTimeout(restartTimer);restartTimer=null}
+ const r=rec;rec=null;
+ if(r){r.onresult=null;r.onerror=null;r.onend=null;try{r.abort()}catch(e){}try{r.stop()}catch(e){}}
+ if(wakeLock){try{wakeLock.release()}catch(e){}wakeLock=null}
+ $('mic').classList.remove('on');$('mic').textContent='Start Listening';
+ }
 $('mic').onclick=()=>{
- if(want){want=false;try{rec.stop()}catch(e){}return}
- want=true;$('mic').classList.add('on');$('mic').textContent='Listening — tap to stop';
+ if(want){stopAll();return}
+ want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
 $('reset').onclick=()=>{done.clear();setHeard('',null);draw()};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!wakeLock)keepAwake()});
-draw();drawDbg();
+draw();
 </script>
 </body>
 </html>

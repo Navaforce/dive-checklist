@@ -1,5 +1,10 @@
 # Releases
 
+## v0.1.4 - 2026-11-01
+- Stop Listening fixed: stopping during the auto-restart gap no longer restarts; UI resets immediately.
+- Diagnostics box removed; mic-blocked message shows in the Heard line.
+- Fins also matches common mishearings (thins, thin, fence, fines, etc.).
+
 ## v0.1.3 - 2026-11-01
 - Removed `apple-mobile-web-app-capable` so a Home Screen shortcut opens in Safari instead of standalone app mode (iOS limits speech recognition in standalone mode).
 
