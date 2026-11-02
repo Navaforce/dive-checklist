@@ -79,6 +79,8 @@ li button.x:active{background:var(--bad);color:#fff;border-color:var(--bad)}
 .secdel{flex:none;width:38px;min-height:56px;border:0;background:transparent;color:var(--mut);font:700 18px/1 -apple-system,system-ui,sans-serif}
 .sec.drop{outline:3px solid var(--acc);outline-offset:-3px}
 li.lifted{opacity:.35}
+li.before{box-shadow:0 -4px 0 0 var(--acc)}
+li.after{box-shadow:0 4px 0 0 var(--acc)}
 .ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;margin:0;list-style:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .sec.complete li button.dg,.sec.complete li button.ed,.sec.complete li button.x{background:#12392b;border-color:var(--ok)}
 .sec.complete li button.x{background:#12392b;border-color:var(--ok)}
@@ -203,7 +205,8 @@ function loadEdits(){
   order:Array.isArray(e.order)?e.order:[],
   secNames:(e.secNames&&typeof e.secNames==='object')?e.secNames:{},
   deletedSecs:Array.isArray(e.deletedSecs)?e.deletedSecs:[],
-  off:Array.isArray(e.off)?e.off:[]
+  off:Array.isArray(e.off)?e.off:[],
+  iorder:Array.isArray(e.iorder)?e.iorder:[]
  };
 }
 function saveEdits(){try{localStorage.setItem(STORE,JSON.stringify(edits))}catch(e){}}
@@ -223,7 +226,7 @@ const BASE=[];
 SECTIONS.forEach((s,si)=>s.items.forEach(it=>BASE.push(prep(it,'s'+si,'d'+si+':'+it.n))));
 let SECS=[],ITEMS=[],GROUPS=[];
 const done=new Set();
-const closed=new Set();
+const closed=new Set(edits.off);
 let renamingSec=null,renameDraft='',editing=null,editDraft='',adding=null,addDraft='',addingSec=false,secDraft='',dragging=false,pendingDraw=false;
 function rebuild(){
  SECS=SECTIONS.map((s,si)=>({id:'s'+si,name:s.name})).filter(s=>!edits.deletedSecs.includes(s.id)).concat(edits.sections.map(s=>({id:s.id,name:s.name,custom:true})));
@@ -253,8 +256,10 @@ function rebuild(){
  });
  const order=new Map(SECS.map((s,i)=>[s.id,i]));
  order.set(LOOSE,SECS.length);
- ITEMS=native.concat(movedL,added).map((it,k)=>({it,k}))
-  .sort((x,y)=>order.get(x.it.sec)-order.get(y.it.sec)||x.k-y.k).map(x=>x.it);
+ const ipos=new Map(edits.iorder.map((x,i)=>[x,i]));
+ const irank=(it,k)=>ipos.has(it.id)?ipos.get(it.id):1e6+k;
+ ITEMS=native.concat(movedL,added).map((it,k)=>({it,k,r:irank(it,k)}))
+  .sort((x,y)=>order.get(x.it.sec)-order.get(y.it.sec)||x.r-y.r).map(x=>x.it);
  const g=new Map();
  ITEMS.forEach((it,i)=>it.aliases.forEach(a=>{if(!g.has(a))g.set(a,[]);if(!g.get(a).includes(i))g.get(a).push(i)}));
  GROUPS=[...g].map(([a,idx])=>({a:' '+a+' ',len:a.length,idx,sig:idx.join(',')})).sort((x,y)=>y.len-x.len);
@@ -270,6 +275,7 @@ function secStats(sid){
 const isComplete=sid=>{const s=secStats(sid);return s.t>0&&s.d===s.t};
 function settle(sid,was){
  if(sid===LOOSE)return;
+ if(isOff(sid)){closed.add(sid);return}
  const now=isComplete(sid);
  if(now&&!was)closed.add(sid);
  if(!now)closed.delete(sid);
@@ -301,7 +307,23 @@ function moveItem(id,to){
  const from=it.sec,wf=isComplete(from),wt=isComplete(to);
  if(it.custom){const a=edits.added.find(x=>x.id===id);if(a)a.sec=to}
  else{delete edits.moved[id];if(to!==it.home)edits.moved[id]=to}
+ edits.iorder=edits.iorder.filter(x=>x!==id);
  saveEdits();rebuild();settle(from,wf);settle(to,wt);draw();
+}
+function reorderItem(id,tid,before){
+ const it=ITEMS.find(x=>x.id===id),t=ITEMS.find(x=>x.id===tid);
+ if(!it||!t||id===tid)return;
+ if(it.sec!==t.sec){const from=it.sec,to=t.sec,wf=isComplete(from),wt=isComplete(to);
+  if(it.custom){const a=edits.added.find(x=>x.id===id);if(a)a.sec=to}
+  else{delete edits.moved[id];if(to!==it.home)edits.moved[id]=to}
+  saveEdits();rebuild();settle(from,wf);settle(to,wt)}
+ const sec=t.sec;
+ const ids=ITEMS.filter(x=>x.sec===sec&&x.id!==id).map(x=>x.id);
+ const i=ids.indexOf(tid);
+ ids.splice(before?i:i+1,0,id);
+ const set=new Set(ids);
+ edits.iorder=edits.iorder.filter(x=>!set.has(x)).concat(ids);
+ saveEdits();rebuild();draw();
 }
 function parseLabel(t){
  const m=t.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
@@ -445,23 +467,28 @@ function startDrag(e,it,li){
  document.body.append(ghost);
  li.classList.add('lifted');
  const dx=e.clientX-r.left,dy=e.clientY-r.top;
- let target=null;
+ let target=null,rowT=null,before=true;
  const place=(x,y)=>{ghost.style.left=(x-dx)+'px';ghost.style.top=(y-dy)+'px'};
  place(e.clientX,e.clientY);
- const clear=()=>document.querySelectorAll('.sec.drop').forEach(n=>n.classList.remove('drop'));
+ const clear=()=>{rowT=null;document.querySelectorAll('.sec.drop').forEach(n=>n.classList.remove('drop'));document.querySelectorAll('li.before,li.after').forEach(n=>n.classList.remove('before','after'))};
  const move=ev=>{
   place(ev.clientX,ev.clientY);
   if(ev.clientY<90)window.scrollBy(0,-14);else if(ev.clientY>window.innerHeight-90)window.scrollBy(0,14);
   const el=document.elementFromPoint(ev.clientX,ev.clientY);
   const s=el&&el.closest?el.closest('.sec'):null;
   clear();
-  if(s&&s.dataset.sec!==it.sec){s.classList.add('drop');target=s.dataset.sec}else target=null;
+  const row=el&&el.closest?el.closest('li[data-id]'):null;
+  if(row&&row.dataset.id!==it.id){
+   const b=row.getBoundingClientRect();
+   before=ev.clientY<b.top+b.height/2;
+   row.classList.add(before?'before':'after');rowT=row.dataset.id;target=null;
+  }else if(s&&s.dataset.sec!==it.sec){s.classList.add('drop');target=s.dataset.sec}else target=null;
  };
  const end=ev=>{
   h.removeEventListener('pointermove',move);h.removeEventListener('pointerup',end);h.removeEventListener('pointercancel',end);
-  ghost.remove();clear();dragging=false;pendingDraw=false;
-  const t=ev.type==='pointerup'?target:null;
-  if(t)moveItem(it.id,t);else draw();
+  ghost.remove();const saved=rowT;clear();rowT=saved;dragging=false;pendingDraw=false;
+  const up=ev.type==='pointerup',t=up?target:null,rt=up?rowT:null;
+  if(rt)reorderItem(it.id,rt,before);else if(t)moveItem(it.id,t);else draw();
  };
  h.addEventListener('pointermove',move);h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end);
 }
@@ -482,7 +509,7 @@ function rowEl(it,i){
    focusEl=inp;
    return el;
   }
-  const li=document.createElement('li');li.className=done.has(it.id)?'done':'';
+  const li=document.createElement('li');li.className=done.has(it.id)?'done':'';li.dataset.id=it.id;
   const b=document.createElement('button');b.type='button';b.className='chk';
   const bx=document.createElement('span');bx.className='box';bx.textContent='✓';
   const nm=document.createElement('span');nm.className='nm';nm.textContent=it.n;
@@ -526,7 +553,7 @@ function draw(){
   tg.setAttribute('role','switch');tg.setAttribute('aria-checked',isOff(sid)?'false':'true');
   tg.setAttribute('aria-label',sec.name+(isOff(sid)?' skipped':' included')+' in count and what is missing');
   tg.append(document.createElement('i'));
-  tg.onclick=()=>{edits.off=isOff(sid)?edits.off.filter(x=>x!==sid):edits.off.concat(sid);saveEdits();draw()};
+  tg.onclick=()=>{if(isOff(sid)){edits.off=edits.off.filter(x=>x!==sid);closed.delete(sid)}else{edits.off=edits.off.concat(sid);closed.add(sid)}saveEdits();draw()};
   hw.append(tg);
   hw.append(sg);
   const se=document.createElement('button');se.type='button';se.className='secedit';se.textContent='✎';
@@ -711,9 +738,9 @@ $('mic').onclick=()=>{
  unlockSpeech();want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
-const VERSION='v0.1.14';$('ver').textContent=VERSION;
+const VERSION='v0.1.15';$('ver').textContent=VERSION;
 $('upd').onclick=()=>{stopAll();$('upd').classList.add('spin');location.replace(location.pathname+'?v='+Date.now())};
-$('reset').onclick=()=>{done.clear();closed.clear();setHeard('',null);draw()};
+$('reset').onclick=()=>{done.clear();closed.clear();edits.off.forEach(x=>closed.add(x));setHeard('',null);draw()};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!wakeLock)keepAwake()});
 rebuild();
 draw();
