@@ -1,5 +1,10 @@
 # Releases
 
+## v0.1.15 - 2026-11-01
+- Drag items to reorder within a section: drag the grip handle onto another row (line shows above or below). Dropping on a row in a different section moves the item there at that position. Order saved in edits (`iorder`).
+- A red toggle now closes its section immediately, and sections that are red start closed on every app open (and after Reset). Turning it green reopens it.
+- Tests: `docs/tests/reorder.js`.
+
 ## v0.1.14 - 2026-11-01
 - Per-section include toggle in each header. Green: the section counts toward the checked total, and its unchecked items are read by "what am I missing". Red: the section is dimmed, skipped by the total, the readout and voice matching (so a duplicate item like Dry Bag goes to the enabled section). Saved in edits (`off`) and kept across closing and reopening. Header buttons narrowed to fit.
 
