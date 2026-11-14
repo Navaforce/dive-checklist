@@ -1,5 +1,8 @@
 # Releases
 
+## v0.1.17 - 2026-11-14
+- Fix: reopening the app showed a stale cached version (v0.1.15) until the refresh icon was tapped. On open, and whenever the app returns to the foreground, it now fetches the latest page uncached, and if the version differs it reloads itself once. Progress is unaffected (localStorage).
+
 ## v0.1.16 - 2026-11-14
 - Progress persists when the app is closed: checked items and open/closed sections are saved to localStorage (`gearcheck.progress.v1`) on every redraw and restored on open. Reset clears it.
 - Tests: `docs/tests/persist.js` (needs jsdom, e.g. `NODE_PATH=/tmp/jsd/node_modules node docs/tests/persist.js index.html`).
