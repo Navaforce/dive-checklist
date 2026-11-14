@@ -225,8 +225,11 @@ function prep(it,sid,id){
 const BASE=[];
 SECTIONS.forEach((s,si)=>s.items.forEach(it=>BASE.push(prep(it,'s'+si,'d'+si+':'+it.n))));
 let SECS=[],ITEMS=[],GROUPS=[];
-const done=new Set();
-const closed=new Set(edits.off);
+const PSTORE='gearcheck.progress.v1';
+let saved={};try{saved=JSON.parse(localStorage.getItem(PSTORE)||'{}')||{}}catch(x){}
+const done=new Set(Array.isArray(saved.done)?saved.done:[]);
+const closed=new Set((Array.isArray(saved.closed)?saved.closed:[]).concat(edits.off));
+function saveProgress(){try{localStorage.setItem(PSTORE,JSON.stringify({done:[...done],closed:[...closed]}))}catch(e){}}
 let renamingSec=null,renameDraft='',editing=null,editDraft='',adding=null,addDraft='',addingSec=false,secDraft='',dragging=false,pendingDraw=false;
 function rebuild(){
  SECS=SECTIONS.map((s,si)=>({id:'s'+si,name:s.name})).filter(s=>!edits.deletedSecs.includes(s.id)).concat(edits.sections.map(s=>({id:s.id,name:s.name,custom:true})));
@@ -529,6 +532,7 @@ function rowEl(it,i){
 }
 
 function draw(){
+ saveProgress();
  if(dragging){pendingDraw=true;return}
  const root=$('list');root.textContent='';focusEl=null;
  SECS.forEach(sec=>{
@@ -738,7 +742,7 @@ $('mic').onclick=()=>{
  unlockSpeech();want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
-const VERSION='v0.1.15';$('ver').textContent=VERSION;
+const VERSION='v0.1.16';$('ver').textContent=VERSION;
 $('upd').onclick=()=>{stopAll();$('upd').classList.add('spin');location.replace(location.pathname+'?v='+Date.now())};
 $('reset').onclick=()=>{done.clear();closed.clear();edits.off.forEach(x=>closed.add(x));setHeard('',null);draw()};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&want&&!wakeLock)keepAwake()});

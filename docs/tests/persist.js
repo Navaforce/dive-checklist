@@ -1,0 +1,16 @@
+const {JSDOM}=require('jsdom');
+const html=require('fs').readFileSync(process.argv[2],'utf8');
+let fail=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fail=1};
+const mk=ls=>new JSDOM(html,{runScripts:'dangerously',url:'http://localhost/',beforeParse(w){for(const k in ls)w.localStorage.setItem(k,ls[k])}}).window;
+let w=mk({});
+const ids=w.eval(`ITEMS.filter(i=>i.sec==='s1').map(i=>i.id)`);
+w.eval(`ITEMS.forEach((it,i)=>{if(it.sec==='s1')setDone(i,true)});draw()`);
+ok(w.eval('isComplete("s1")'),'section complete');
+const ls={};for(const k of ['gearcheck.edits.v1','gearcheck.progress.v1'])if(w.localStorage.getItem(k))ls[k]=w.localStorage.getItem(k);
+w=mk(ls);
+ok(ids.every(id=>w.eval(`done.has(${JSON.stringify(id)})`)),'done items persist after reopen');
+ok(w.eval('closed.has("s1")'),'completed section stays closed');
+w.document.getElementById('reset').click();
+w=mk({'gearcheck.progress.v1':w.localStorage.getItem('gearcheck.progress.v1')});
+ok(w.eval('done.size')===0,'reset clears persisted progress');
+process.exit(fail);

@@ -1,5 +1,9 @@
 # Releases
 
+## v0.1.16 - 2026-11-14
+- Progress persists when the app is closed: checked items and open/closed sections are saved to localStorage (`gearcheck.progress.v1`) on every redraw and restored on open. Reset clears it.
+- Tests: `docs/tests/persist.js` (needs jsdom, e.g. `NODE_PATH=/tmp/jsd/node_modules node docs/tests/persist.js index.html`).
+
 ## v0.1.15 - 2026-11-01
 - Drag items to reorder within a section: drag the grip handle onto another row (line shows above or below). Dropping on a row in a different section moves the item there at that position. Order saved in edits (`iorder`).
 - A red toggle now closes its section immediately, and sections that are red start closed on every app open (and after Reset). Turning it green reopens it.
