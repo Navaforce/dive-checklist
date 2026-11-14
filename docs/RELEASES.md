@@ -1,5 +1,8 @@
 # Releases
 
+## v0.1.18 - 2026-11-14
+- Fix for v0.1.17: the refresh icon loads `?v=<time>`, a different URL from the Home Screen one, so the stale cached copy of the plain URL was never replaced. The open-time check now fetches the plain URL with `cache:'reload'`, which overwrites that cached copy, so the next open starts on the latest version. A stale copy older than v0.1.17 has no check code, so one manual refresh tap is still needed to bootstrap.
+
 ## v0.1.17 - 2026-11-14
 - Fix: reopening the app showed a stale cached version (v0.1.15) until the refresh icon was tapped. On open, and whenever the app returns to the foreground, it now fetches the latest page uncached, and if the version differs it reloads itself once. Progress is unaffected (localStorage).
 

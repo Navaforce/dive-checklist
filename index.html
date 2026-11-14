@@ -742,10 +742,10 @@ $('mic').onclick=()=>{
  unlockSpeech();want=true;$('mic').classList.add('on');$('mic').textContent='Stop Listening';
  keepAwake();start();
 };
-const VERSION='v0.1.17';$('ver').textContent=VERSION;
+const VERSION='v0.1.18';$('ver').textContent=VERSION;
 function checkLatest(){
  if(!navigator.onLine||typeof fetch!=='function')return;
- fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
+ fetch(location.pathname,{cache:'reload'}).then(r=>r.ok?r.text():'').then(t=>{
   const m=t.match(/const VERSION='(v[\d.]+)'/);
   if(!m||m[1]===VERSION)return;
   const k='gearcheck.autoreload';
